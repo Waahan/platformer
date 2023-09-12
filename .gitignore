@@ -1,0 +1,9 @@
+#For cmake
+build/
+Makefile
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+
+#For vim and other editors
+*.swp

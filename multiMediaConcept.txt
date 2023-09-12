@@ -1,0 +1,150 @@
+/*
+    directory/file structure 
+
+    have a src with the header and cpp files with the same name
+
+    split it into groups like a gui group for all gui related files 
+
+    maybe have a cmake directory for finding librarys 
+
+    have a CMakeLists.txt in the root directory
+
+
+
+    multi media interface draft
+
+    drawing
+    {
+        public:
+        virtual void* src() const =0
+    }
+
+    renderWindow
+    {
+        public:
+        window(const std::string& title, int width, int height)
+        noCopy()
+        yesMove()
+
+        setIcon(const std::string& path)
+
+        clear()
+
+        draw(const drawing& drawable)
+
+        display()
+    }    
+
+    image : public drawing
+    {
+        public:
+        image(const std::string& path, int x, int y, int width, int height);
+        noCopy()
+        move()
+
+        src() const override
+    }
+
+    enum colours {}
+    convertColours(colours convert)
+
+    enum fontStyle {}
+    convertStyle(fontStyle convert)
+
+    message : public drawing
+    {
+        public:
+        message(const std::string& message, const std::string& fontPath, int x, int y, int width, int height, colours newColour);
+        noCopy()
+        move()
+
+        src() const override
+
+        newColour(colours newColour)
+        newPos(int x, int y)
+        newDimesions(int width, int heigth)
+        newMessage(const std::string& message)
+
+        newFont(const std::string& fontPath)
+        newStyle(fontStyle newStyle)
+        newSize(int setSize)
+    }
+
+    audio
+    {
+        paused()
+        playing()
+
+        newAudio(const std::string& path)
+        newVolume(int setVolume)
+
+        play(int loops = 0)
+
+        pause()
+
+        stop()
+    }
+
+    music : public audio
+    {
+        fadeIn(chrono::milliseconds fadeInFor, int loops = 0)
+        fadeOut(chrono::milliseconds fadeOutFor)
+    }
+
+    sound : public audio
+    {
+    
+    }
+
+    enum class mouseButtons {}
+    enum class controllerButtons {}
+    enum class controlerAxis {}
+
+    //Use enum = for easy converting to SDL scan/key codes
+    enum class keyboardKeys {}
+
+    enum class feedbackDevices {}
+
+    eventHandle
+    {
+        maybe a singleton
+
+        pollEvents();
+
+        //Add / between inputs example: keyboard/mouse/controller
+        string getInputMethod() const;
+
+        //mouse
+        hasMouse()
+
+        getMousePos()
+        getMouseButton(mouseButtons)
+
+        //keyboard
+        hasKeyboard()
+
+        getKey(keyboardKeys)
+        useTextInput(bool)
+        getTextInput()
+
+        //feedback
+        hasFeedback()
+
+        rumble()
+        rumbleDevice(feedbackDevices)
+
+        //controller
+        hasController()
+        controllerNum()
+
+        string getControllerName() const
+        getButton(controllerButtons, controller)
+        getAxis(controllerAxis)
+
+        //touch screen
+        hasTouchScreen()
+
+        fingerDown()
+        fingerPos()
+    }
+*/
