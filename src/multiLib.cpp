@@ -187,4 +187,37 @@ namespace multiLib
     {
         SDL_RenderPresent(renderer.get());
     }
+
+    image::image(const std::string& path, int x, int y, int width, int height, renderWindow& window)
+        : texture{window.getImage(path)}, images{}, index{}, imageWindow{window}
+    {
+    /*
+        Precondition width and height are greater than zero
+    */
+        assert( (width > 0 && height > 0) && "image width and height must be greater than zero");
+
+        images.push_back(SDL_Rect{x, y, width, height});
+    }
+
+    image& image::operator++(int)
+    {
+    /*
+        Loop over images vector
+    */
+        (index < (int)images.size() - 1) ? index++ : index = 0; 
+
+        return *this;
+    }
+
+    image& image::addFrame(int x, int y, int width, int height)
+    {
+    /*
+        Precondition width and height are greater than zero
+    */
+        assert( (width > 0 && height > 0) && "image width and height should be greater than zero");
+
+        images.push_back(SDL_Rect{x, y, width, height});
+
+        return *this;
+    }
 } //multiLib

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
 
 extern "C"
 {
@@ -90,4 +91,29 @@ namespace multiLib
         int logicalWidth, logicalHeight;
     };
 
+    class image : public drawing
+    {
+        public:
+        image(const std::string& path, int x, int y, int width, int height, renderWindow& window);
+
+        image(const image& copyFrom) = delete;
+        image& operator=(const image& copyFrom) = delete;
+
+        image(image&& moveFrom) = default;
+        image& operator=(image&& moveFrom) = default;
+
+        ~image() = default;
+
+        SDL_Texture* src() const override { return texture.get(); }
+        const SDL_Rect& srcImage() const override { return images[index]; }
+
+        image& operator++(int);
+        image& addFrame(int x, int y, int width, int height);
+
+        private:
+        Estd::custom_unique_ptr<SDL_Texture, SDL_DestroyTexture> texture;
+        std::vector<SDL_Rect> images;
+        int index;
+        renderWindow& imageWindow;
+    };
 } //multiLib
