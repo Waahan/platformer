@@ -116,4 +116,47 @@ namespace multiLib
         int index;
         renderWindow& imageWindow;
     };
+
+    enum class colours : int { black = 0, white, red, orange, yellow, green, blue, indigo, violet };
+    SDL_Colour convertColour(colours colour);
+
+    enum class fontStyles : int { normal = TTF_STYLE_NORMAL, bold = TTF_STYLE_BOLD, italic = TTF_STYLE_ITALIC, underline = TTF_STYLE_UNDERLINE, strikeThrought = TTF_STYLE_STRIKETHROUGH };
+
+    class message : public drawing
+    {
+        public:
+        message(const std::string& setMessage, const std::string& fontPath, int x, int y, int width, int height, colours setColour, renderWindow& setWindow);
+
+        message(const message& copyFrom) = delete;
+        message& operator=(const message& copyFrom) = delete;
+
+        message(message&& moveFrom) = default;
+        message& operator=(message&& moveFrom) = default;
+
+        ~message() = default;
+
+        SDL_Texture* src() const override { return texture.get(); }
+        const SDL_Rect& srcImage() const override { return dimensions; }
+
+        message& newColour(colours newColour);
+        message& newPos(int x, int y);
+        message& newDimensions(int width, int height);
+        message& newMessage(const std::string& message);
+
+        message& newFont(const std::string& fontPath);
+        message& newStyle(fontStyles style);
+
+        private:
+        void updateTexture();
+
+        std::string messageString;
+        colours colour;
+        renderWindow& window;
+
+        Estd::custom_unique_ptr<SDL_Texture, SDL_DestroyTexture> texture;
+        SDL_Rect dimensions;
+
+        Estd::custom_unique_ptr<TTF_Font, TTF_CloseFont> font;
+        int fontSize = 36;
+    };
 } //multiLib

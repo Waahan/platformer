@@ -220,4 +220,122 @@ namespace multiLib
 
         return *this;
     }
+
+    SDL_Colour convertColour(colours colour)
+    {
+        //The colours are using RGBA
+        switch(colour)
+        {
+            case colours::black:
+                return SDL_Colour{0, 0, 0, 1};
+
+            case colours::white: 
+                return SDL_Colour{255, 255, 255, 1};
+
+            case colours::red:
+                return SDL_Colour{255, 0, 0, 1};
+
+            case colours::orange: 
+                return SDL_Colour{255, 165, 0, 1};
+
+            case colours::yellow:
+                return SDL_Colour{255, 255, 0, 1};
+
+            case colours::green:
+                return SDL_Colour{0, 255, 0, 1};
+
+            case colours::blue:
+                return SDL_Colour{0, 0, 255, 1};
+
+            case colours::indigo:
+                return SDL_Colour{75, 0, 130, 1};
+
+            case colours::violet:
+                return SDL_Colour{238, 130, 238, 1};
+        }
+
+        return SDL_Colour{0, 0, 0, 1};
+    }
+
+    message::message(const std::string& setMessage, const std::string& fontPath, int x, int y, int width, int height, colours setColour, renderWindow& setWindow)
+        : messageString{std::move(setMessage)}, window{setWindow}, texture{}, dimensions{x, y, width, height}, font{TTF_OpenFont(fontPath.c_str(), 24)}
+    {
+    /*
+        Precondition width and height are greater than zero
+    */
+        colour = setColour;
+
+        assert((font) && TTF_GetError());
+
+        updateTexture();
+    }
+
+    message& message::newColour(colours newColour)
+    {
+        colour = newColour;
+
+        updateTexture();
+
+        return *this;
+    }
+
+    message& message::newPos(int x, int y)
+    {
+        dimensions.x = x;
+        dimensions.y = y;
+
+        return *this;
+    }
+
+    message& message::newDimensions(int width, int height)
+    {
+    /*
+        Precondition width and height are greater than zero
+    */
+        assert((width > 0 && height > 0) && "message width and heigth must be greater than zero");
+
+        dimensions.w = width;
+        dimensions.h = height;
+
+        return *this;
+    }
+
+    message& message::newMessage(const std::string& message)
+    {
+        messageString = message;
+
+        updateTexture();
+
+        return *this;
+    }
+
+    message& message::newFont(const std::string& path)
+    {
+        font.reset(TTF_OpenFont( path.c_str(), fontSize) );
+
+        assert((font) && TTF_GetError() );
+
+        updateTexture();
+
+        return *this;
+    }
+
+    message& message::newStyle(fontStyles style)
+    {
+        TTF_SetFontStyle( font.get(), (int)style);
+
+        updateTexture();
+
+        return *this;
+    }
+
+    void message::updateTexture()
+    {
+        Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> surface{ TTF_RenderText_Solid(font.get(), messageString.c_str(), convertColour(colour)) };
+
+        assert((surface) && "Failed to render text");
+
+        texture.reset( window.convertSurfaceToTexture(surface.get()) );
+    }
+
 } //multiLib
