@@ -494,4 +494,72 @@ namespace multiLib
     {
         return (channel < 0) ? false : currentChunk.get() == Mix_GetChunk(channel);
     }
+
+    bool keyboardInput::useEvent(const SDL_Event& event)
+    {
+    /*
+        return true if event.type is a keyboard event
+    */
+        switch(event.type)
+        {
+            case SDL_KEYDOWN:
+                handleEvent(event.key, true);
+                return true;
+
+            case SDL_KEYUP:
+                handleEvent(event.key, false);
+                return true;
+        }
+        return false;
+    }
+
+    bool keyboardInput::requestStatus(int inputButton) const
+    {
+    /*
+        Use the int value of keyboardKeys as input button
+
+        Precondition inputButton is a value of keyboardKeys
+    */
+        return keyboardStatus[inputButton];
+    }
+
+    bool keyboardInput::getKey(keyboardKeys key) const
+    {
+        return keyboardStatus[(int)key];
+    }
+
+    void keyboardInput::handleEvent(const SDL_KeyboardEvent& event, bool upOrDown)
+    {
+    /*
+        Precondtion in array bounds
+    */
+        keyboardStatus[event.keysym.scancode] = upOrDown;
+    }
+
+    eventHandler& eventHandler::get()
+    {
+        static eventHandler instance{};
+
+        return instance; 
+    }
+
+    eventHandler& eventHandler::addInputDevice(inputDevice* device)
+    {
+        assert(device && "inputDevice must not be nullptr");
+
+        devices.push_back(device);
+
+        return *this;
+    }
+
+    void eventHandler::pollEvents()
+    {
+        while(SDL_PollEvent(&event))
+        {
+            for(const auto& device : devices)
+                if(device->useEvent(event))
+                    break;
+        }     
+    }
+
 } //multiLib

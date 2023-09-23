@@ -250,4 +250,75 @@ namespace multiLib
         Estd::custom_unique_ptr<Mix_Chunk, Mix_FreeChunk> currentChunk;
         int channel;
     };
+
+    class inputDevice
+    {
+        public:
+        inputDevice() = default;
+
+        inputDevice(const inputDevice& copyFrom) = delete;
+        inputDevice& operator=(const inputDevice& copyFrom) = delete;
+
+        inputDevice(inputDevice&& moveFrom) = delete;
+        inputDevice& operator=(inputDevice&& moveFrom) = delete;
+
+        ~inputDevice() = default;
+        
+        virtual bool useEvent(const SDL_Event& event) =0;
+        virtual bool requestStatus(int inputButton) const =0;
+    };
+
+    enum class keyboardKeys : int {w=SDL_SCANCODE_W, a=SDL_SCANCODE_A, s=SDL_SCANCODE_S, d=SDL_SCANCODE_D};
+
+    class keyboardInput : public inputDevice
+    {
+        public:
+        keyboardInput() = default;
+
+        keyboardInput(const keyboardInput& copyFrom) = delete;
+        keyboardInput& operator=(const keyboardInput& copyFrom) = delete;
+
+        keyboardInput(keyboardInput&& moveFrom) = delete;
+        keyboardInput& operator=(keyboardInput&& moveFrom) = delete;
+
+        ~keyboardInput() = default;
+
+        bool useEvent(const SDL_Event& event) override;
+        bool requestStatus(int inputButton) const override;
+
+        bool getKey(keyboardKeys key) const;
+
+        private:
+        void handleEvent(const SDL_KeyboardEvent& event, bool upOrDown);
+
+        bool keyboardStatus[282]{false};
+    };
+
+    enum class mouseButtons : int { left = SDL_BUTTON_LEFT, middle=SDL_BUTTON_MIDDLE, right=SDL_BUTTON_RIGHT};
+    enum class controllerButtons : int { invalid=-1, a=SDL_CONTROLLER_BUTTON_A, b=SDL_CONTROLLER_BUTTON_B, x=SDL_CONTROLLER_BUTTON_X, y=SDL_CONTROLLER_BUTTON_Y, back=SDL_CONTROLLER_BUTTON_BACK, guide=SDL_CONTROLLER_BUTTON_GUIDE, start=SDL_CONTROLLER_BUTTON_START};
+    enum class controllerAxis : int { invalid=-1, leftX=SDL_CONTROLLER_AXIS_LEFTX, leftY=SDL_CONTROLLER_AXIS_LEFTY, rightX=SDL_CONTROLLER_AXIS_RIGHTX, rightY=SDL_CONTROLLER_AXIS_RIGHTY, triggerLeft=SDL_CONTROLLER_AXIS_TRIGGERLEFT, triggerRight=SDL_CONTROLLER_AXIS_TRIGGERRIGHT};
+
+    class eventHandler
+    {
+        public:
+        static eventHandler& get();
+
+        void pollEvents();
+
+        eventHandler& addInputDevice(inputDevice* device);
+
+        private:
+        SDL_Event event;
+        std::vector<inputDevice*> devices;
+
+        eventHandler() = default;
+
+        eventHandler(const eventHandler& copyFrom) = delete;
+        eventHandler& operator=(const eventHandler& copyFrom) = delete;
+
+        eventHandler(eventHandler&& moveFrom) = delete;
+        eventHandler& operator=(eventHandler&& moveFrom) = delete;
+
+        ~eventHandler() = default;
+   };
 } //multiLib
