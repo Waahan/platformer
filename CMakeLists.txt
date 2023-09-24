@@ -13,6 +13,7 @@ find_package(SDL_ttf REQUIRED)
 
 find_package(SDL_mixer REQUIRED)
 
-#add_executable(main)
+include_directories(include)
+add_executable(main src/main.cpp src/multiLib.cpp)
 
-#target_link_libraries(main PUBLIC ${SDL_LIBRARIES} ${SDL_IMAGE_LIB} ${SDL_TTF_LIB} ${SDL_MIX_LIB})
+target_link_libraries(main PUBLIC ${SDL2_LIBRARIES} ${SDL_IMAGE_LIB} ${SDL_TTF_LIB} ${SDL_MIX_LIB})
