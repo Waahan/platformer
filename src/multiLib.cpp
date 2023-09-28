@@ -1,3 +1,5 @@
+#include "multiLib.h"
+
 #include <string>
 #include <tuple>
 #include <vector>
@@ -14,7 +16,6 @@ extern "C"
 }
 
 #include "Estd.h"
-#include "multiLib.h"
 
 namespace multiLib
 {
@@ -78,7 +79,7 @@ namespace multiLib
         return *this;
     }
 
-    bool init::calledInit(initSystems system)
+    inline bool init::calledInit(initSystems system)
     {
         return inits[(int)system];
     }
@@ -133,7 +134,7 @@ namespace multiLib
         return std::make_tuple(width, height);
     }
 
-    std::tuple<int, int> renderWindow::logicalWindowSize()
+    inline std::tuple<int, int> renderWindow::logicalWindowSize()
     {
         return std::make_tuple(logicalWidth, logicalHeight);
     }
@@ -331,7 +332,7 @@ namespace multiLib
         return *this;
     }
 
-    void message::updateTexture()
+    inline void message::updateTexture()
     {
         Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> surface{ TTF_RenderText_Solid(font.get(), messageString.c_str(), convertColour(colour)) };
 
@@ -397,7 +398,7 @@ namespace multiLib
 
     music& music::pause()
     {
-        Mix_PausedMusic();
+        Mix_PauseMusic();
 
         return *this;
     }
@@ -490,7 +491,7 @@ namespace multiLib
         return *this;
     }
 
-    bool sound::ownsChannel() const
+    inline bool sound::ownsChannel() const
     {
         return (channel < 0) ? false : currentChunk.get() == Mix_GetChunk(channel);
     }
@@ -523,11 +524,6 @@ namespace multiLib
         return keyboardStatus[inputButton];
     }
 
-    bool keyboardInput::getKey(keyboardKeys key) const
-    {
-        return keyboardStatus[(int)key];
-    }
-
     void keyboardInput::handleEvent(const SDL_KeyboardEvent& event, bool upOrDown)
     {
     /*
@@ -556,10 +552,13 @@ namespace multiLib
     {
         while(SDL_PollEvent(&event))
         {
+            if(event.type == SDL_QUIT)
+                exit(0);
+
             for(const auto& device : devices)
                 if(device->useEvent(event))
                     break;
-        }     
+        }
     }
 
 } //multiLib

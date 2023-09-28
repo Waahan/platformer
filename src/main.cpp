@@ -1,4 +1,7 @@
+#include "Estd.h"
 #include "multiLib.h"
+
+#include <iostream>
 
 int main()
 {

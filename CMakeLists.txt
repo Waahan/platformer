@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 
 project(platformer VERSION 0.1 DESCRIPTION "Base of project" HOMEPAGE_URL "https://www.github.com/Waahan/platformer" LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 find_package(SDL2 REQUIRED)
@@ -33,7 +36,7 @@ set(CPACK_VERBATIM_VARIABLES FALSE)
 include(CPack)
 
 include_directories(include)
-add_executable(main src/main.cpp src/multiLib.cpp)
+add_executable(main src/main.cpp src/multiLib.cpp src/Estd.cpp)
 
 install(TARGETS main RUNTIME DESTINATION bin)
 install(DIRECTORY assets DESTINATION bin)

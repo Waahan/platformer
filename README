@@ -1,6 +1,10 @@
 My platforming game( a work in progress title) is ment to be a nice little project using SDL2.
 I plan for it to be cross platform and work on window, linux, mac and possibly android or the web.
 
+# Code
+
+I have decided to make my own code style for now.
+
 # Building
 
 To build this game you will need cmake and SDL2, SDL_image, SDL_ttf and SDL_mixer

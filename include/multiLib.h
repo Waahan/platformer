@@ -25,7 +25,7 @@ namespace multiLib
         static init& getInit();
 
         init& initSystem(initSystems system);
-        bool calledInit(initSystems system);
+        inline bool calledInit(initSystems system);
 
         private:
         init() = default;
@@ -72,7 +72,7 @@ namespace multiLib
         ~renderWindow() = default;
 
         std::tuple<int, int> realWindowSize();
-        std::tuple<int, int> logicalWindowSize();
+        inline std::tuple<int, int> logicalWindowSize();
 
         void setIcon(const std::string& path);
 
@@ -105,8 +105,8 @@ namespace multiLib
 
         ~image() = default;
 
-        SDL_Texture* src() const override { return texture.get(); }
-        const SDL_Rect& srcImage() const override { return images[index]; }
+        inline SDL_Texture* src() const override { return texture.get(); }
+        inline const SDL_Rect& srcImage() const override { return images[index]; }
 
         image& operator++(int);
         image& addFrame(int x, int y, int width, int height);
@@ -148,7 +148,7 @@ namespace multiLib
         message& newStyle(fontStyles style);
 
         private:
-        void updateTexture();
+        inline void updateTexture();
 
         std::string messageString;
         colours colour;
@@ -190,7 +190,7 @@ namespace multiLib
     class music : public audio
     {
         public:
-        music(const std::string& path);
+        explicit music(const std::string& path);
 
         music(const music& copyFrom) = delete;
         music& operator=(const music& copyFrom) = delete;
@@ -222,7 +222,7 @@ namespace multiLib
     class sound : public audio
     {
         public:
-        sound(const std::string& path);
+        explicit sound(const std::string& path);
         
         sound(const sound& copyFrom) = delete;
         sound& operator=(const sound& copyFrom) = delete;
@@ -245,7 +245,7 @@ namespace multiLib
         sound& stop() override;
 
         private:
-        bool ownsChannel() const;
+        inline bool ownsChannel() const;
 
         Estd::custom_unique_ptr<Mix_Chunk, Mix_FreeChunk> currentChunk;
         int channel;
@@ -286,7 +286,7 @@ namespace multiLib
         bool useEvent(const SDL_Event& event) override;
         bool requestStatus(int inputButton) const override;
 
-        bool getKey(keyboardKeys key) const;
+        inline bool getKey(keyboardKeys key) const { return keyboardStatus[(int)key]; }
 
         private:
         void handleEvent(const SDL_KeyboardEvent& event, bool upOrDown);
