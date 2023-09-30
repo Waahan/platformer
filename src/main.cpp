@@ -1,6 +1,8 @@
 #include "Estd.h"
 #include "multiLib.h"
 
+#include <iostream>
+
 int main()
 {
     multiLib::init& mainInit = multiLib::init::getInit();

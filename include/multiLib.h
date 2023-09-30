@@ -278,7 +278,23 @@ namespace multiLib
         ~inputDevice() = default;
         
         virtual bool useEvent(const SDL_Event& event) =0;
-        virtual bool requestStatus(int inputButton) const =0;
+    };
+
+    class feedbackDevice
+    {
+        public:
+        feedbackDevice() = default;
+        
+        feedbackDevice(const feedbackDevice& copyFrom) = delete;
+        feedbackDevice& operator=(const feedbackDevice& copyFrom) = delete;
+
+        feedbackDevice(feedbackDevice&& moveFrom) = delete;
+        feedbackDevice& operator=(feedbackDevice&& moveFrom) = delete;
+
+        ~feedbackDevice() = default;
+
+        //Just in case that feedback device sometimes supports feedback
+        virtual bool hasFeedback() const =0;
     };
 
     enum class keyboardKeys : int {w=SDL_SCANCODE_W, a=SDL_SCANCODE_A, s=SDL_SCANCODE_S, d=SDL_SCANCODE_D};
@@ -297,7 +313,6 @@ namespace multiLib
         ~keyboardInput() = default;
 
         bool useEvent(const SDL_Event& event) override;
-        bool requestStatus(int inputButton) const override;
 
         inline bool getKey(keyboardKeys key) const { return keyboardStatus[(int)key]; }
 
@@ -308,6 +323,31 @@ namespace multiLib
     };
 
     enum class mouseButtons : int { left = SDL_BUTTON_LEFT, middle=SDL_BUTTON_MIDDLE, right=SDL_BUTTON_RIGHT};
+
+    class mouse : public inputDevice 
+    {
+        public:
+        mouse() = default;
+
+        mouse(const mouse& copyFrom) = delete;
+        mouse& operator=(const mouse& copyFrom) = delete;
+
+        mouse(mouse&& moveFrom) = default;
+        mouse& operator=(mouse&& moveFrom) = default;
+
+        ~mouse() = default;
+
+        bool useEvent(const SDL_Event& event) override;
+
+        inline bool getButton(mouseButtons button) const { return mouseButtonStatus[(int)button]; }
+        //std::tuple<int, int> getPos() const;
+
+        private:
+        void handleMouseButton(const SDL_MouseButtonEvent& event, bool upOrDown);
+
+        bool mouseButtonStatus[6]{false};
+    };
+
     enum class controllerButtons : int { invalid=-1, a=SDL_CONTROLLER_BUTTON_A, b=SDL_CONTROLLER_BUTTON_B, x=SDL_CONTROLLER_BUTTON_X, y=SDL_CONTROLLER_BUTTON_Y, back=SDL_CONTROLLER_BUTTON_BACK, guide=SDL_CONTROLLER_BUTTON_GUIDE, start=SDL_CONTROLLER_BUTTON_START};
     enum class controllerAxis : int { invalid=-1, leftX=SDL_CONTROLLER_AXIS_LEFTX, leftY=SDL_CONTROLLER_AXIS_LEFTY, rightX=SDL_CONTROLLER_AXIS_RIGHTX, rightY=SDL_CONTROLLER_AXIS_RIGHTY, triggerLeft=SDL_CONTROLLER_AXIS_TRIGGERLEFT, triggerRight=SDL_CONTROLLER_AXIS_TRIGGERRIGHT};
 

@@ -617,16 +617,6 @@ namespace multiLib
         return false;
     }
 
-    bool keyboardInput::requestStatus(int inputButton) const
-    {
-    /*
-        Use the int value of keyboardKeys as input button
-
-        Precondition inputButton is a value of keyboardKeys
-    */
-        return keyboardStatus[inputButton];
-    }
-
     void keyboardInput::handleEvent(const SDL_KeyboardEvent& event, bool upOrDown)
     {
     /*
@@ -634,6 +624,27 @@ namespace multiLib
     */
         keyboardStatus[event.keysym.scancode] = upOrDown;
     }
+
+    bool mouse::useEvent(const SDL_Event& event) 
+    {
+        switch(event.type)
+        {
+            case SDL_MOUSEBUTTONDOWN:
+                handleMouseButton(event.button, true);
+                return true;
+
+            case SDL_MOUSEBUTTONUP:
+                handleMouseButton(event.button, true);
+                return true;
+        }
+
+        return false;
+    }
+
+    void mouse::handleMouseButton(const SDL_MouseButtonEvent& event, bool upOrDown)
+    {
+        mouseButtonStatus[event.button] = upOrDown;
+    } 
 
     eventHandler& eventHandler::get()
     {

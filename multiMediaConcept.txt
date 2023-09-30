@@ -3,89 +3,6 @@
 
     multi media interface draft
 
-    drawing
-    {
-        public:
-        virtual void* src() const =0
-    }
-
-    renderWindow
-    {
-        public:
-        window(const std::string& title, int width, int height)
-        noCopy()
-        yesMove()
-
-        setIcon(const std::string& path)
-
-        clear()
-
-        draw(const drawing& drawable)
-
-        display()
-    }    
-
-    image : public drawing
-    {
-        public:
-        image(const std::string& path, int x, int y, int width, int height);
-        noCopy()
-        move()
-
-        src() const override
-    }
-
-    enum colours {}
-    convertColours(colours convert)
-
-    enum fontStyle {}
-    convertStyle(fontStyle convert)
-
-    message : public drawing
-    {
-        public:
-        message(const std::string& message, const std::string& fontPath, int x, int y, int width, int height, colours newColour);
-        noCopy()
-        move()
-
-        src() const override
-
-        newColour(colours newColour)
-        newPos(int x, int y)
-        newDimesions(int width, int heigth)
-        newMessage(const std::string& message)
-
-        newFont(const std::string& fontPath)
-        newStyle(fontStyle newStyle)
-        newSize(int setSize)
-    }
-
-    audio
-    {
-        paused()
-        playing()
-
-        newAudio(const std::string& path)
-        newVolume(int setVolume)
-
-        play(int loops = 0)
-
-        pause()
-
-        stop()
-    }
-
-    music : public audio
-    {
-        fadeIn(chrono::milliseconds fadeInFor, int loops = 0)
-        fadeOut(chrono::milliseconds fadeOutFor)
-    }
-
-    sound : public audio
-    {
-    
-    }
-
     enum class mouseButtons {}
     enum class controllerButtons {}
     enum class controlerAxis {}
@@ -100,41 +17,41 @@
         maybe a singleton
 
         pollEvents();
+    }
 
-        //Add / between inputs example: keyboard/mouse/controller
-        string getInputMethod() const;
+    player draft
 
-        //mouse
-        hasMouse()
+    These input classes will be made for controller cursor and mouse and keyboard input
 
-        getMousePos()
-        getMouseButton(mouseButtons)
+    cursor
+    {
+        setImage(string path)
 
-        //keyboard
-        hasKeyboard()
+        tuple getPos()
 
-        getKey(keyboardKeys)
-        useTextInput(bool)
-        getTextInput()
+        getButton(enum button)
+    }
 
-        //feedback
-        hasFeedback()
+    keyboardTextEditor
+    {
+        void startTextEdit()
 
-        rumble()
-        rumbleDevice(feedbackDevices)
+        string getTextEdited()
 
-        //controller
-        hasController()
-        controllerNum()
+        void stopTextEdit()
+    }
 
-        string getControllerName() const
-        getButton(controllerButtons, controller)
-        getAxis(controllerAxis)
+    highLevelInput
+    {
+        control eventHandler and other inputDevices 
 
-        //touch screen
-        hasTouchScreen()
+        request every input devices version of wasd and other controls
+    }
 
-        fingerDown()
-        fingerPos()
+    hightLevelOutput
+    {
+        control feedback devices
+
+        rumble and do feedback for devices 
     }
 */
