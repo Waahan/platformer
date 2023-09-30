@@ -125,7 +125,7 @@ namespace multiLib
         assert( !(hasError) && SDL_GetError() );
     }
 
-    std::tuple<int, int> renderWindow::realWindowSize()
+    std::tuple<int, int> renderWindow::realWindowSize() const
     {
         int width, height;
 
@@ -134,18 +134,110 @@ namespace multiLib
         return std::make_tuple(width, height);
     }
 
-    inline std::tuple<int, int> renderWindow::logicalWindowSize()
+    inline std::tuple<int, int> renderWindow::logicalWindowSize() const
     {
         return std::make_tuple(logicalWidth, logicalHeight);
     }
 
-    void renderWindow::setIcon(const std::string& path)
+    std::string renderWindow::getTitle() const
+    {
+        return SDL_GetWindowTitle(window.get());
+    }
+
+    float renderWindow::getOpacity() const
+    {
+        float opacity = 0;
+
+        bool hasError = SDL_GetWindowOpacity(window.get(), &opacity);
+
+        assert(!hasError && SDL_GetError());
+
+        return opacity;
+    }
+
+    void renderWindow::requestAttention(flash annoyannce) const
+    {
+        bool hasError = SDL_FlashWindow(window.get(), (SDL_FlashOperation)annoyannce);
+
+        assert(!hasError && SDL_GetError());
+    }
+
+    void renderWindow::hideWindow()
+    {
+        SDL_HideWindow(window.get());
+    }
+    
+    void renderWindow::showWindow()
+    {
+        SDL_ShowWindow(window.get());
+    }
+
+    void renderWindow::fullScreenWindow()
+    {
+        bool hasError = SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP);
+
+        assert(!hasError && SDL_GetError());
+    }
+
+    renderWindow& renderWindow::setSize(int width, int height)
+    {
+    /*
+        Precondition width and height are greater than zero
+    */
+        assert((width > 0 && height > 0) && "window width and height must be greater than zero");
+
+        SDL_SetWindowSize(window.get(), width, height);
+
+        return *this;
+    }
+
+    renderWindow& renderWindow::setLogicalSize(int width, int height)
+    {
+    /*
+        Precondition width and height are greater than zero
+    */
+        assert((width > 0 && height > 0) && "window width and height must be greater than zero");
+
+        bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
+
+        assert(!hasError && SDL_GetError());
+
+        logicalWidth = width;
+        logicalHeight = height;
+
+        return *this;
+    }
+
+    renderWindow& renderWindow::setIcon(const std::string& path)
     {
         Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> icon{ IMG_Load(path.c_str()) };
 
         assert( (icon) && SDL_GetError() );
 
         SDL_SetWindowIcon(window.get(), icon.get() );
+
+        return *this;
+    }
+
+    renderWindow& renderWindow::setTitle(const std::string& title)
+    {
+        SDL_SetWindowTitle(window.get(), title.c_str());
+
+        return *this;
+    }
+
+    renderWindow& renderWindow::setOpacity(float opacity)
+    {
+    /*
+        Precondition opacity must be 0.0f or greater and 1.0f or less
+    */
+        assert((opacity >= 0.0f && opacity <= 1.0f) && "opacity must be between 0.0f and 1.0f");
+
+        bool hasError = SDL_SetWindowOpacity(window.get(), opacity);
+
+        assert(!hasError && SDL_GetError());
+
+        return *this;
     }
 
     SDL_Texture* renderWindow::getImage(const std::string& path)
@@ -159,6 +251,9 @@ namespace multiLib
 
     SDL_Texture* renderWindow::convertSurfaceToTexture(SDL_Surface* convert)
     {
+    /*
+        Precondition convert is not nullptr
+    */
         assert( (convert) && "Can not convert a nullptr to a texture");
 
         SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer.get(), convert);
@@ -266,6 +361,8 @@ namespace multiLib
     /*
         Precondition width and height are greater than zero
     */
+        assert( (width > 0 && height > 0) && "message width and height must be greater than zero");
+
         colour = setColour;
 
         assert((font) && TTF_GetError());
@@ -389,6 +486,12 @@ namespace multiLib
 
     music& music::play(int loops)
     {
+    /*
+        Precondition if music is fading call stop
+    */
+        if(fading())
+            stop();
+
         bool hasError = Mix_PlayMusic(currentMusic.get(), loops);
 
         assert(!(hasError) && Mix_GetError());
@@ -493,7 +596,7 @@ namespace multiLib
 
     inline bool sound::ownsChannel() const
     {
-        return (channel < 0) ? false : currentChunk.get() == Mix_GetChunk(channel);
+        return (channel < 0) ? false : (currentChunk.get() == Mix_GetChunk(channel));
     }
 
     bool keyboardInput::useEvent(const SDL_Event& event)

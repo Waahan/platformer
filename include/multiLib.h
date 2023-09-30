@@ -58,6 +58,8 @@ namespace multiLib
         virtual const SDL_Rect& srcImage() const =0;
     };
 
+    enum class flash : int { cancel = SDL_FLASH_CANCEL, brief = SDL_FLASH_BRIEFLY, untilUser = SDL_FLASH_UNTIL_FOCUSED};
+
     class renderWindow
     {
         public:
@@ -71,10 +73,21 @@ namespace multiLib
 
         ~renderWindow() = default;
 
-        std::tuple<int, int> realWindowSize();
-        inline std::tuple<int, int> logicalWindowSize();
+        std::tuple<int, int> realWindowSize() const;
+        inline std::tuple<int, int> logicalWindowSize() const;
+        std::string getTitle() const;
+        float getOpacity() const;
 
-        void setIcon(const std::string& path);
+        void requestAttention(flash annoyance) const;
+        void hideWindow();
+        void showWindow();
+        void fullScreenWindow();
+
+        renderWindow& setSize(int width, int height);
+        renderWindow& setLogicalSize(int width, int height);
+        renderWindow& setIcon(const std::string& path);
+        renderWindow& setTitle(const std::string& title);
+        renderWindow& setOpacity(float opacity);
 
         SDL_Texture* getImage(const std::string& path);
         SDL_Texture* convertSurfaceToTexture(SDL_Surface* convert);

@@ -1,15 +1,5 @@
 /*
-    directory/file structure 
-
-    have a src with the header and cpp files with the same name
-
-    split it into groups like a gui group for all gui related files 
-
-    maybe have a cmake directory for finding librarys 
-
-    have a CMakeLists.txt in the root directory
-
-
+    - Make cursor input device
 
     multi media interface draft
 
