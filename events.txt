@@ -1,0 +1,30 @@
+class eventHandler
+    bool useEvent(event)
+    
+    //have a event func callback for all events
+
+class eventMessager
+
+    default makes exitFunction use a [](){ exit(0); }
+
+    void pollEvent()
+    {
+        while(event = getEvent())
+        {
+            if(event is exit)
+                exitFunc();
+
+            for(eventHandle : eventHandlers)
+            {
+                if(eventHandle.useEvent(event))
+                    break;
+            }
+        }
+    }
+
+    void setExitCallback(std::func exitFunc) { exitFunction = exitFunc; }
+    this& addEventHandler(eventHandler);
+
+    private
+    vec eventHandlers
+    std::func exitFunction
