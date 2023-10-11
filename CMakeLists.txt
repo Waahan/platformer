@@ -36,7 +36,7 @@ set(CPACK_VERBATIM_VARIABLES FALSE)
 include(CPack)
 
 include_directories(include)
-add_executable(main src/main.cpp src/multiLib.cpp src/Estd.cpp)
+add_executable(main src/main.cpp src/multiLib/audio.cpp src/multiLib/events.cpp src/multiLib/misc.cpp src/multiLib/visuals.cpp)
 
 install(TARGETS main RUNTIME DESTINATION bin)
 install(DIRECTORY assets DESTINATION bin)
