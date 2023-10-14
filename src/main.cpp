@@ -1,7 +1,6 @@
 #include "multiLib/misc.h"
 #include "multiLib/visuals.h"
-
-#include <iostream>
+#include "multiLib/events.h"
 
 int main()
 {
@@ -10,6 +9,19 @@ int main()
     mainInit.initSystem(multiLib::initSystems::SDL).initSystem(multiLib::initSystems::Image).initSystem(multiLib::initSystems::TTF).initSystem(multiLib::initSystems::Mixer);
 
     multiLib::renderWindow mainWindow{"Test", 800, 800};
+
+    multiLib::eventMessager mainEvent{};
+
+    multiLib::keyboardEvent mainKeyboard{};
+
+    mainKeyboard.keyEventCallback([](multiLib::keyboardKeys key, bool upOrDown){ if(key == multiLib::keyboardKeys::escape) exit(0); });
+
+    mainEvent.addEventHandler(&mainKeyboard);
+
+    while(true)
+    {
+        mainEvent.pollEvents();
+    }
 
     return 0;
 }

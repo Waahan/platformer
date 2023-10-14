@@ -28,7 +28,7 @@ namespace multiLib
         virtual bool paused() const =0;
         virtual bool playing() const =0;
 
-        virtual audio& newVolume(int setVolume) =0;
+        virtual audio& setVolume(int setVolume) =0;
 
         virtual audio& play(int loops = 0) =0;
 
@@ -55,7 +55,7 @@ namespace multiLib
         bool playing() const override;
         bool fading() const;
 
-        music& newVolume(int setVolume) override;
+        music& setVolume(int setVolume) override;
 
         music& fadeIn(std::chrono::milliseconds fadeInFor, int loops = 0);
         music& play(int loops = 0) override;
@@ -86,7 +86,7 @@ namespace multiLib
         bool paused() const override;
         bool playing() const override;
 
-        sound& newVolume(int setVolume) override;
+        sound& setVolume(int setVolume) override;
 
         sound& play(int loops = 0) override;
 

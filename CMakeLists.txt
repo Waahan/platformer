@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.2...3.27)
 
 project(platformer VERSION 0.1 DESCRIPTION "Base of project" HOMEPAGE_URL "https://www.github.com/Waahan/platformer" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+option(BUILD_RUNTIME_ERRORS "Build runtime error checking and logging" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -36,7 +38,7 @@ set(CPACK_VERBATIM_VARIABLES FALSE)
 include(CPack)
 
 include_directories(include)
-add_executable(main src/main.cpp src/multiLib/audio.cpp src/multiLib/events.cpp src/multiLib/misc.cpp src/multiLib/visuals.cpp)
+add_executable(main src/main.cpp src/multiLib/audio.cpp src/multiLib/events.cpp src/multiLib/misc.cpp src/multiLib/visuals.cpp src/multiLib/errors.cpp)
 
 install(TARGETS main RUNTIME DESTINATION bin)
 install(DIRECTORY assets DESTINATION bin)

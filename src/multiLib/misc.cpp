@@ -1,7 +1,5 @@
 #include "multiLib/misc.h"
 
-#include <cassert>
-
 extern "C"
 {
     #include <SDL2/SDL.h>
@@ -9,6 +7,8 @@ extern "C"
     #include <SDL2/SDL_ttf.h>
     #include <SDL2/SDL_mixer.h>
 }
+
+#include "multiLib/errors.h"
 
 namespace multiLib
 {
@@ -28,7 +28,7 @@ namespace multiLib
             case initSystems::SDL:
                 {
                     initResult = SDL_Init(SDL_INIT_EVERYTHING);
-                    assert(!(initResult) && SDL_GetError());
+                    runtimeAssert(!initResult, SDL_GetError());
                 }
                 break;
             case initSystems::Image:
@@ -37,14 +37,14 @@ namespace multiLib
                     int imgResult = 0;
 
                     imgResult = IMG_Init(imgFlags);
-                    assert( imgResult == imgFlags && "IMG_Init failed");
+                    runtimeAssert(imgResult == imgFlags, SDL_GetError());
                 }
                 break;
 
             case initSystems::TTF:
                 {
                     initResult = TTF_Init();
-                    assert(!(initResult) && TTF_GetError());
+                    runtimeAssert(!initResult, TTF_GetError());
                 }
                 break;
 
@@ -54,7 +54,7 @@ namespace multiLib
                     int mixResult = 0;
 
                     mixResult = Mix_Init(mixFlags);
-                    assert(mixResult == mixFlags && "Mix_Init failed");
+                    runtimeAssert(mixResult == mixFlags, Mix_GetError());
                     
                     int frequency = 44100;
                     unsigned short format = MIX_DEFAULT_FORMAT;
@@ -62,7 +62,7 @@ namespace multiLib
                     int chunksize = 2048;
                     initResult = Mix_OpenAudio(frequency, format, channels, chunksize);
 
-                    assert(!(initResult) && "Mix_OpenAudio failed");
+                    runtimeAssert(!initResult, Mix_GetError());
                 }
                 break;
         }

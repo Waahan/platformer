@@ -47,8 +47,7 @@ namespace multiLib
 
         ~renderWindow() = default;
 
-        std::tuple<int, int> realWindowSize() const;
-        inline std::tuple<int, int> logicalWindowSize() const;
+        std::tuple<int, int> getSize() const;
         std::string getTitle() const;
         float getOpacity() const;
 
@@ -126,13 +125,13 @@ namespace multiLib
         SDL_Texture* src() const override { return texture.get(); }
         const SDL_Rect& srcImage() const override { return dimensions; }
 
-        message& newColour(colours newColour);
-        message& newPos(int x, int y);
-        message& newDimensions(int width, int height);
-        message& newMessage(const std::string& message);
+        message& setColour(colours newColour);
+        message& setPos(int x, int y);
+        message& setDimensions(int width, int height);
+        message& setMessage(const std::string& message);
 
-        message& newFont(const std::string& fontPath);
-        message& newStyle(fontStyles style);
+        message& setFont(const std::string& fontPath);
+        message& setStyle(fontStyles style);
 
         private:
         inline void updateTexture();

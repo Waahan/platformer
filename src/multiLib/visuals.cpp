@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "multiLib/errors.h"
+
 namespace multiLib
 {
     renderWindow::renderWindow(const std::string& title, int width, int height)
@@ -14,29 +16,20 @@ namespace multiLib
         
         window.reset( SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_RESIZABLE) );
 
-        assert( (window) && SDL_GetError() );
+        runtimeAssert(window, SDL_GetError());
 
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
         renderer.reset( SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED) );
 
-        assert( (renderer) && SDL_GetError() );
+        runtimeAssert(renderer, SDL_GetError());
 
         bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
 
-        assert( !(hasError) && SDL_GetError() );
+        runtimeAssert(!hasError, SDL_GetError());
     }
 
-    std::tuple<int, int> renderWindow::realWindowSize() const
-    {
-        int width, height;
-
-        SDL_GetWindowSize(window.get(), &width, &height);
-
-        return std::make_tuple(width, height);
-    }
-
-    inline std::tuple<int, int> renderWindow::logicalWindowSize() const
+    std::tuple<int, int> renderWindow::getSize() const
     {
         return std::make_tuple(logicalWidth, logicalHeight);
     }
@@ -52,7 +45,7 @@ namespace multiLib
 
         bool hasError = SDL_GetWindowOpacity(window.get(), &opacity);
 
-        assert(!hasError && SDL_GetError());
+        runtimeAssert(!hasError, SDL_GetError());
 
         return opacity;
     }
@@ -61,7 +54,7 @@ namespace multiLib
     {
         bool hasError = SDL_FlashWindow(window.get(), (SDL_FlashOperation)annoyannce);
 
-        assert(!hasError && SDL_GetError());
+        runtimeAssert(!hasError, SDL_GetError());
     }
 
     void renderWindow::hideWindow()
@@ -78,7 +71,7 @@ namespace multiLib
     {
         bool hasError = SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP);
 
-        assert(!hasError && SDL_GetError());
+        runtimeAssert(!hasError, SDL_GetError());
     }
 
     renderWindow& renderWindow::setSize(int width, int height)
@@ -102,7 +95,7 @@ namespace multiLib
 
         bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
 
-        assert(!hasError && SDL_GetError());
+        runtimeAssert(!hasError, SDL_GetError());
 
         logicalWidth = width;
         logicalHeight = height;
@@ -114,7 +107,7 @@ namespace multiLib
     {
         Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> icon{ IMG_Load(path.c_str()) };
 
-        assert( (icon) && SDL_GetError() );
+        runtimeAssert(icon, SDL_GetError());
 
         SDL_SetWindowIcon(window.get(), icon.get() );
 
@@ -137,7 +130,7 @@ namespace multiLib
 
         bool hasError = SDL_SetWindowOpacity(window.get(), opacity);
 
-        assert(!hasError && SDL_GetError());
+        runtimeAssert(!hasError, SDL_GetError());
 
         return *this;
     }
@@ -146,7 +139,7 @@ namespace multiLib
     {
         SDL_Texture* newImage = IMG_LoadTexture(renderer.get(), path.c_str());
 
-        assert( (newImage) && "Failed to load image" );
+        runtimeAssert(newImage, SDL_GetError());
         
         return newImage;
     }
@@ -160,7 +153,7 @@ namespace multiLib
 
         SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer.get(), convert);
 
-        assert( (newTexture) && SDL_GetError() );
+        runtimeAssert(newTexture, SDL_GetError());
     
         return newTexture;
     }
@@ -169,7 +162,7 @@ namespace multiLib
     {
         bool hasError = SDL_RenderClear(renderer.get());
 
-        assert( !(hasError) && SDL_GetError() );
+        runtimeAssert(!hasError, SDL_GetError());
     }
 
     renderWindow& renderWindow::draw(const drawing& drawable, int destX, int destY)
@@ -178,7 +171,7 @@ namespace multiLib
 
         bool hasError = SDL_RenderCopy(renderer.get(), drawable.src(), &drawable.srcImage(), &dest);
 
-        assert( !(hasError) && SDL_GetError() );
+        runtimeAssert(!hasError, SDL_GetError());
 
         return *this;
     }
@@ -267,12 +260,12 @@ namespace multiLib
 
         colour = setColour;
 
-        assert((font) && TTF_GetError());
+        runtimeAssert(font, TTF_GetError());
 
         updateTexture();
     }
 
-    message& message::newColour(colours newColour)
+    message& message::setColour(colours newColour)
     {
         colour = newColour;
 
@@ -281,7 +274,7 @@ namespace multiLib
         return *this;
     }
 
-    message& message::newPos(int x, int y)
+    message& message::setPos(int x, int y)
     {
         dimensions.x = x;
         dimensions.y = y;
@@ -289,7 +282,7 @@ namespace multiLib
         return *this;
     }
 
-    message& message::newDimensions(int width, int height)
+    message& message::setDimensions(int width, int height)
     {
     /*
         Precondition width and height are greater than zero
@@ -302,7 +295,7 @@ namespace multiLib
         return *this;
     }
 
-    message& message::newMessage(const std::string& message)
+    message& message::setMessage(const std::string& message)
     {
         messageString = message;
 
@@ -311,18 +304,18 @@ namespace multiLib
         return *this;
     }
 
-    message& message::newFont(const std::string& path)
+    message& message::setFont(const std::string& path)
     {
         font.reset(TTF_OpenFont( path.c_str(), fontSize) );
 
-        assert((font) && TTF_GetError() );
+        runtimeAssert(font, TTF_GetError());
 
         updateTexture();
 
         return *this;
     }
 
-    message& message::newStyle(fontStyles style)
+    message& message::setStyle(fontStyles style)
     {
         TTF_SetFontStyle( font.get(), (int)style);
 
@@ -335,9 +328,8 @@ namespace multiLib
     {
         Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> surface{ TTF_RenderText_Solid(font.get(), messageString.c_str(), convertColour(colour)) };
 
-        assert((surface) && "Failed to render text");
+        runtimeAssert(surface, TTF_GetError());
 
         texture.reset( window.convertSurfaceToTexture(surface.get()) );
     }
-
 } //multiLib

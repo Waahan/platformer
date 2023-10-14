@@ -2,12 +2,14 @@
 
 #include <cassert>
 
+#include "multiLib/errors.h"
+
 namespace multiLib
 {
     music::music(const std::string& path)
         : currentMusic{Mix_LoadMUS(path.c_str())}
     {
-        assert((currentMusic) && Mix_GetError());
+        runtimeAssert(currentMusic, Mix_GetError());
     }
 
     bool music::paused() const
@@ -27,14 +29,14 @@ namespace multiLib
         return (isFading != MIX_NO_FADING);
     }
 
-    music& music::newVolume(int setVolume)
+    music& music::setVolume(int setVolume)
     {
     /*
         Precondition setVolume must be between 0 and MIX_MAX_VOLUME
         Precondition music is not fading
     */
         assert( (setVolume > 0 && setVolume < MIX_MAX_VOLUME) && "music volume must be between 0 and MIX_MAX_VOLUME");
-        assert( !(fading()) && "newVolume should not be called while music is fading");
+        assert( !(fading()) && "setVolume should not be called while music is fading");
 
         Mix_VolumeMusic(setVolume);
 
@@ -45,7 +47,7 @@ namespace multiLib
     {
         bool hasError = Mix_FadeInMusic(currentMusic.get(), loops, (int)fadeInFor.count()); 
 
-        assert(!(hasError) && Mix_GetError());
+        runtimeAssert(!hasError, Mix_GetError());
 
         return *this;
     }
@@ -60,7 +62,7 @@ namespace multiLib
 
         bool hasError = Mix_PlayMusic(currentMusic.get(), loops);
 
-        assert(!(hasError) && Mix_GetError());
+        runtimeAssert(!hasError, Mix_GetError());
 
         return *this;
     }
@@ -96,7 +98,7 @@ namespace multiLib
     sound::sound(const std::string& path)
         : currentChunk{Mix_LoadWAV(path.c_str())}, channel{-1}
     {
-        assert((currentChunk) && Mix_GetError());
+        runtimeAssert(currentChunk, Mix_GetError());
     }
 
     bool sound::paused() const 
@@ -115,7 +117,7 @@ namespace multiLib
         return false;
     }
 
-    sound& sound::newVolume(int setVolume)
+    sound& sound::setVolume(int setVolume)
     {
     /*
         Precondition setVolume greater than zero less than MIX_MAX_VOLUME

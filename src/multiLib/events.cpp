@@ -44,4 +44,36 @@ namespace multiLib
 
         return *this;
     }
+
+    bool keyboardEvent::useEvent(const SDL_Event& event)
+    {
+        switch(event.type)
+        {
+            case SDL_KEYDOWN:
+                handleKeyEvents(event.key, true);
+                return true;
+
+            case SDL_KEYUP:
+                handleKeyEvents(event.key, false);
+                return true;
+            
+            case SDL_TEXTINPUT:
+                return true;
+
+            case SDL_TEXTEDITING:
+                return true;
+        }
+
+        return false;
+    }
+
+    void keyboardEvent::keyEventCallback(std::function<void(keyboardKeys, bool)>&& keyCallback)
+    {
+        keyCallFunc = std::move(keyCallback);
+    }
+
+    void keyboardEvent::handleKeyEvents(const SDL_KeyboardEvent& event, bool upOrDown)
+    {
+        keyCallFunc(static_cast<keyboardKeys>(event.keysym.scancode), upOrDown);
+    }
 } //multiLib
