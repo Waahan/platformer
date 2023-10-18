@@ -8,6 +8,8 @@ extern "C"
     #include <SDL2/SDL_mixer.h>
 }
 
+#include <cassert>
+
 #include "multiLib/errors.h"
 
 namespace multiLib
@@ -95,4 +97,46 @@ namespace multiLib
         }
     }
 
+    rectangle::rectangle(int setX, int setY, int setWidth, int setHeight)
+        : x{setX}, y{setY}, width{setWidth}, height{setHeight}
+    {
+        assert((width > 0 && height > 0) && "width and height must be greater than zero");
+    }
+
+    SDL_Rect rectangle::toRect() const
+    {
+        return SDL_Rect{x, y, width, height};
+    }
+
+    rectangle& rectangle::setX(int setX)
+    {
+        x = setX;
+
+        return *this;
+    }
+
+    rectangle& rectangle::setY(int setY)
+    {
+        x = setY;
+
+        return *this;
+    }
+
+    rectangle& rectangle::setWidth(int setWidth)
+    {
+        assert(setWidth > 0 && "Width must be greater than zero");
+
+        width = setWidth;
+
+        return *this;
+    }
+
+    rectangle& rectangle::setHeight(int setHeight)
+    {
+        assert(setHeight > 0 && "Width must be greater than zero");
+
+        height = setHeight;
+
+        return *this;
+    }
 } //multiLib

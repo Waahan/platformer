@@ -12,6 +12,7 @@ extern "C"
 }
 
 #include "Estd.h"
+#include "misc.h"
 
 namespace multiLib
 {
@@ -29,7 +30,7 @@ namespace multiLib
         virtual ~drawing() = default;
 
         virtual SDL_Texture* src() const =0;
-        virtual const SDL_Rect& srcImage() const =0;
+        virtual const rectangle& srcImage() const =0;
     };
 
     enum class flash : int { cancel = SDL_FLASH_CANCEL, brief = SDL_FLASH_BRIEFLY, untilUser = SDL_FLASH_UNTIL_FOCUSED};
@@ -81,7 +82,7 @@ namespace multiLib
     class image : public drawing
     {
         public:
-        image(const std::string& path, int x, int y, int width, int height, renderWindow& window);
+        image(const std::string& path, rectangle rect, renderWindow& window);
 
         image(const image& copyFrom) = delete;
         image& operator=(const image& copyFrom) = delete;
@@ -92,14 +93,14 @@ namespace multiLib
         ~image() = default;
 
         inline SDL_Texture* src() const override { return texture.get(); }
-        inline const SDL_Rect& srcImage() const override { return images[index]; }
+        inline const rectangle& srcImage() const override { return images[index]; }
 
         image& operator++(int);
-        image& addFrame(int x, int y, int width, int height);
+        image& addFrame(rectangle newRect);
 
         private:
         Estd::custom_unique_ptr<SDL_Texture, SDL_DestroyTexture> texture;
-        std::vector<SDL_Rect> images;
+        std::vector<rectangle> images;
         int index;
         renderWindow& imageWindow;
     };
@@ -109,10 +110,29 @@ namespace multiLib
 
     enum class fontStyles : int { normal = TTF_STYLE_NORMAL, bold = TTF_STYLE_BOLD, italic = TTF_STYLE_ITALIC, underline = TTF_STYLE_UNDERLINE, strikeThrought = TTF_STYLE_STRIKETHROUGH };
 
+    class font
+    {
+        public:
+        font(std::string&& fontPath, int fontSize);
+
+        font(const font& moveFrom) = delete;
+        font& operator=(const font& From) = delete;
+
+        font(font&& moveFrom) = default;
+        font& operator=(font&& moveFrom) = default;
+
+        ~font() = default;
+
+        TTF_Font* getFont() const { return sdlFont.get(); }
+
+        private:
+        Estd::custom_unique_ptr<TTF_Font, TTF_CloseFont> sdlFont;
+    };
+
     class message : public drawing
     {
         public:
-        message(const std::string& setMessage, const std::string& fontPath, int x, int y, int width, int height, colours setColour, renderWindow& setWindow);
+        message(std::string&& setMessage, font&& setFont, rectangle rect, colours setColour, renderWindow& setWindow);
 
         message(const message& copyFrom) = delete;
         message& operator=(const message& copyFrom) = delete;
@@ -123,28 +143,24 @@ namespace multiLib
         ~message() = default;
 
         SDL_Texture* src() const override { return texture.get(); }
-        const SDL_Rect& srcImage() const override { return dimensions; }
+        const rectangle& srcImage() const override { return dimensions; }
 
         message& setColour(colours newColour);
         message& setPos(int x, int y);
         message& setDimensions(int width, int height);
         message& setMessage(const std::string& message);
 
-        message& setFont(const std::string& fontPath);
-        message& setStyle(fontStyles style);
-
         private:
-        inline void updateTexture();
+        void updateTexture();
 
         std::string messageString;
         colours colour;
         renderWindow& window;
 
         Estd::custom_unique_ptr<SDL_Texture, SDL_DestroyTexture> texture;
-        SDL_Rect dimensions;
+        rectangle dimensions;
 
-        Estd::custom_unique_ptr<TTF_Font, TTF_CloseFont> font;
-        int fontSize = 36;
+        font messageFont;
     };
 
 } //multiLib

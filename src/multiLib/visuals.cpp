@@ -167,9 +167,11 @@ namespace multiLib
 
     renderWindow& renderWindow::draw(const drawing& drawable, int destX, int destY)
     {
-        SDL_Rect dest {destX, destY, drawable.srcImage().w, drawable.srcImage().h};
+        SDL_Rect dest {destX, destY, drawable.srcImage().getWidth(), drawable.srcImage().getHeight()};
 
-        bool hasError = SDL_RenderCopy(renderer.get(), drawable.src(), &drawable.srcImage(), &dest);
+        SDL_Rect src {drawable.srcImage().toRect()};
+
+        bool hasError = SDL_RenderCopy(renderer.get(), drawable.src(), &src, &dest);
 
         runtimeAssert(!hasError, SDL_GetError());
 
@@ -181,15 +183,10 @@ namespace multiLib
         SDL_RenderPresent(renderer.get());
     }
 
-    image::image(const std::string& path, int x, int y, int width, int height, renderWindow& window)
+    image::image(const std::string& path, rectangle rect, renderWindow& window)
         : texture{window.getImage(path)}, images{}, index{}, imageWindow{window}
     {
-    /*
-        Precondition width and height are greater than zero
-    */
-        assert( (width > 0 && height > 0) && "image width and height must be greater than zero");
-
-        images.push_back(SDL_Rect{x, y, width, height});
+        images.push_back(rect);
     }
 
     image& image::operator++(int)
@@ -202,14 +199,9 @@ namespace multiLib
         return *this;
     }
 
-    image& image::addFrame(int x, int y, int width, int height)
+    image& image::addFrame(rectangle newRect) 
     {
-    /*
-        Precondition width and height are greater than zero
-    */
-        assert( (width > 0 && height > 0) && "image width and height should be greater than zero");
-
-        images.push_back(SDL_Rect{x, y, width, height});
+        images.push_back(newRect);
 
         return *this;
     }
@@ -250,17 +242,18 @@ namespace multiLib
         return SDL_Colour{0, 0, 0, 1};
     }
 
-    message::message(const std::string& setMessage, const std::string& fontPath, int x, int y, int width, int height, colours setColour, renderWindow& setWindow)
-        : messageString{std::move(setMessage)}, window{setWindow}, texture{}, dimensions{x, y, width, height}, font{TTF_OpenFont(fontPath.c_str(), 24)}
+    font::font(std::string&& fontPath, int fontSize)
+        : sdlFont{TTF_OpenFont(fontPath.c_str(), fontSize)}
+    {
+    }
+
+    message::message(std::string&& setMessage, font&& setFont, rectangle rect, colours setColour, renderWindow& setWindow)
+        : messageString{std::move(setMessage)}, window{setWindow}, texture{}, dimensions{rect}, messageFont{std::move(setFont)}
     {
     /*
         Precondition width and height are greater than zero
     */
-        assert( (width > 0 && height > 0) && "message width and height must be greater than zero");
-
         colour = setColour;
-
-        runtimeAssert(font, TTF_GetError());
 
         updateTexture();
     }
@@ -276,21 +269,16 @@ namespace multiLib
 
     message& message::setPos(int x, int y)
     {
-        dimensions.x = x;
-        dimensions.y = y;
+        dimensions.setX(x);
+        dimensions.setY(y);
 
         return *this;
     }
 
     message& message::setDimensions(int width, int height)
     {
-    /*
-        Precondition width and height are greater than zero
-    */
-        assert((width > 0 && height > 0) && "message width and heigth must be greater than zero");
-
-        dimensions.w = width;
-        dimensions.h = height;
+        dimensions.setWidth(width);
+        dimensions.setHeight(height);
 
         return *this;
     }
@@ -304,29 +292,9 @@ namespace multiLib
         return *this;
     }
 
-    message& message::setFont(const std::string& path)
+    void message::updateTexture()
     {
-        font.reset(TTF_OpenFont( path.c_str(), fontSize) );
-
-        runtimeAssert(font, TTF_GetError());
-
-        updateTexture();
-
-        return *this;
-    }
-
-    message& message::setStyle(fontStyles style)
-    {
-        TTF_SetFontStyle( font.get(), (int)style);
-
-        updateTexture();
-
-        return *this;
-    }
-
-    inline void message::updateTexture()
-    {
-        Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> surface{ TTF_RenderText_Solid(font.get(), messageString.c_str(), convertColour(colour)) };
+        Estd::custom_unique_ptr<SDL_Surface, SDL_FreeSurface> surface{ TTF_RenderText_Solid(messageFont.getFont(), messageString.c_str(), convertColour(colour)) };
 
         runtimeAssert(surface, TTF_GetError());
 
