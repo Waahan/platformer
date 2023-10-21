@@ -9,21 +9,36 @@ namespace multiLib
     music::music(const std::string& path)
         : currentMusic{Mix_LoadMUS(path.c_str())}
     {
-        runtimeAssert(currentMusic, Mix_GetError());
+    /*
+        construct a music object
+
+        Precondition music path is valid
+        Precondition music is FLAC, MP3, Ogg, VOC, WAV, MIDI, MOD, Opus audio format
+    */
+        assert(currentMusic && Mix_GetError());
     }
 
     bool music::paused() const
     {
+    /*
+        Return if the music channel is paused
+    */
         return Mix_PausedMusic();
     }
 
     bool music::playing() const 
     {
+    /*
+        Return if the music channel is playing
+    */
         return Mix_PlayingMusic();
     }
 
     bool music::fading() const
     {
+    /*
+        Return if the music channel is fading
+    */
         Mix_Fading isFading = Mix_FadingMusic();
 
         return (isFading != MIX_NO_FADING);
@@ -32,6 +47,8 @@ namespace multiLib
     music& music::setVolume(int setVolume)
     {
     /*
+        Set the volume of the music channel
+
         Precondition setVolume must be between 0 and MIX_MAX_VOLUME
         Precondition music is not fading
     */
@@ -45,9 +62,14 @@ namespace multiLib
 
     music& music::fadeIn(std::chrono::milliseconds fadeInFor, int loops)
     {
+    /*
+        Fade the currentMusic in 
+
+        Postcondition Mix_FadeInMusic returns 0 
+    */
         bool hasError = Mix_FadeInMusic(currentMusic.get(), loops, (int)fadeInFor.count()); 
 
-        runtimeAssert(!hasError, Mix_GetError());
+        runtime_assert(!hasError, Mix_GetError());
 
         return *this;
     }
@@ -55,20 +77,27 @@ namespace multiLib
     music& music::play(int loops)
     {
     /*
+        Play currentMusic
+
         Precondition if music is fading call stop
+
+        Postcondition Mix_PlayMusic returns 0
     */
         if(fading())
             stop();
 
         bool hasError = Mix_PlayMusic(currentMusic.get(), loops);
 
-        runtimeAssert(!hasError, Mix_GetError());
+        runtime_assert(!hasError, Mix_GetError());
 
         return *this;
     }
 
     music& music::pause()
     {
+    /*
+        Pause the music channel
+    */
         Mix_PauseMusic();
 
         return *this;
@@ -76,6 +105,9 @@ namespace multiLib
 
     music& music::resume()
     {
+    /*
+        Resume the music channel
+    */
         Mix_ResumeMusic();
 
         return *this;
@@ -83,6 +115,9 @@ namespace multiLib
 
     music& music::stop()
     {
+    /*
+        Stop the music channel
+    */
         Mix_HaltMusic();
 
         return *this;
@@ -90,6 +125,9 @@ namespace multiLib
 
     music& music::fadeOut(std::chrono::milliseconds fadeOutFor)
     {
+    /*
+        Fade out music channel
+    */
         Mix_FadeOutMusic((int)fadeOutFor.count());
 
         return *this;
@@ -98,11 +136,20 @@ namespace multiLib
     sound::sound(const std::string& path)
         : currentChunk{Mix_LoadWAV(path.c_str())}, channel{-1}
     {
-        runtimeAssert(currentChunk, Mix_GetError());
+    /*
+        Create a sound object
+
+        Precondition path is a valid path
+        Precondition path is FLAC, MP3, Ogg, VOC, WAV, MIDI, MOD, Opus audio format
+    */
+        assert(currentChunk && Mix_GetError());
     }
 
     bool sound::paused() const 
     {
+    /*
+        Return if sound is playing
+    */
         if(ownsChannel())
             return Mix_Paused(channel);
 
@@ -111,6 +158,9 @@ namespace multiLib
 
     bool sound::playing() const
     {
+    /*
+        Return if sound is playing
+    */
         if(ownsChannel())
             return Mix_Playing(channel); 
 
@@ -120,26 +170,40 @@ namespace multiLib
     sound& sound::setVolume(int setVolume)
     {
     /*
+        Set the volume of sound
+
         Precondition setVolume greater than zero less than MIX_MAX_VOLUME
+        
+        Postcondition Mix_Volume chunk should not return -1
     */
         assert((setVolume > 0 && setVolume < MIX_MAX_VOLUME) && "sound volume must be between 0 and MIX_MAX_VOLUME");
 
-        Mix_VolumeChunk(currentChunk.get(), setVolume);
+        int hasError = Mix_VolumeChunk(currentChunk.get(), setVolume);
+
+        assert((hasError != -1) && "sound chunk is so how NULL");
 
         return *this;
     }
 
     sound& sound::play(int loops)
     {
+    /*
+        Play sound and get it a channel
+
+        Postcondition channel should not equal -1
+    */
         channel = Mix_PlayChannel(channel, currentChunk.get(), loops); 
 
-        assert( (channel != -1) && "Chunk could not be played");
+        runtime_assert( (channel != -1), SDL_GetError()); 
 
         return *this;
     }
 
     sound& sound::pause()
     {
+    /*
+        Pause sound 
+    */
         if(ownsChannel())
             Mix_Pause(channel);
 
@@ -148,6 +212,9 @@ namespace multiLib
 
     sound& sound::resume()
     {
+    /*
+        Resume sound
+    */
         if(ownsChannel())
             Mix_Resume(channel);
 
@@ -156,15 +223,20 @@ namespace multiLib
 
     sound& sound::stop() 
     {
+    /*
+        Stop sound
+    */
         if(ownsChannel())
             Mix_HaltChannel(channel);
 
         return *this;
     }
 
-    inline bool sound::ownsChannel() const
+    bool sound::ownsChannel() const
     {
+    /*
+        Make sure sound owns channel
+    */
         return (channel < 0) ? false : (currentChunk.get() == Mix_GetChunk(channel));
     }
-
 } //multiLib

@@ -96,7 +96,7 @@ namespace multiLib
         sound& stop() override;
 
         private:
-        inline bool ownsChannel() const;
+        bool ownsChannel() const;
 
         Estd::custom_unique_ptr<Mix_Chunk, Mix_FreeChunk> currentChunk;
         int channel;

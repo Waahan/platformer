@@ -58,7 +58,6 @@ namespace multiLib
         void fullScreenWindow();
 
         renderWindow& setSize(int width, int height);
-        renderWindow& setLogicalSize(int width, int height);
         renderWindow& setIcon(const std::string& path);
         renderWindow& setTitle(const std::string& title);
         renderWindow& setOpacity(float opacity);

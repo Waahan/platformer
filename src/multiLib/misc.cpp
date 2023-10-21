@@ -16,6 +16,9 @@ namespace multiLib
 {
     init& init::getInit()
     {
+    /*
+        Create and instance of init once
+    */
         static init instance;
 
         return instance;
@@ -23,6 +26,9 @@ namespace multiLib
 
     init& init::initSystem(initSystems system)
     {
+    /*
+        Init a system
+    */
         bool initResult = false;
 
         switch(system)
@@ -30,7 +36,7 @@ namespace multiLib
             case initSystems::SDL:
                 {
                     initResult = SDL_Init(SDL_INIT_EVERYTHING);
-                    runtimeAssert(!initResult, SDL_GetError());
+                    runtime_assert(!initResult, SDL_GetError());
                 }
                 break;
             case initSystems::Image:
@@ -39,14 +45,14 @@ namespace multiLib
                     int imgResult = 0;
 
                     imgResult = IMG_Init(imgFlags);
-                    runtimeAssert(imgResult == imgFlags, SDL_GetError());
+                    runtime_assert((imgResult == imgFlags), SDL_GetError());
                 }
                 break;
 
             case initSystems::TTF:
                 {
                     initResult = TTF_Init();
-                    runtimeAssert(!initResult, TTF_GetError());
+                    runtime_assert(!initResult, TTF_GetError());
                 }
                 break;
 
@@ -56,7 +62,7 @@ namespace multiLib
                     int mixResult = 0;
 
                     mixResult = Mix_Init(mixFlags);
-                    runtimeAssert(mixResult == mixFlags, Mix_GetError());
+                    runtime_assert((mixResult == mixFlags), Mix_GetError());
                     
                     int frequency = 44100;
                     unsigned short format = MIX_DEFAULT_FORMAT;
@@ -64,7 +70,7 @@ namespace multiLib
                     int chunksize = 2048;
                     initResult = Mix_OpenAudio(frequency, format, channels, chunksize);
 
-                    runtimeAssert(!initResult, Mix_GetError());
+                    runtime_assert(!initResult, Mix_GetError());
                 }
                 break;
         }
@@ -76,11 +82,17 @@ namespace multiLib
 
     inline bool init::calledInit(initSystems system)
     {
+    /*
+        Check if a system was inited
+    */
         return inits[(int)system];
     }
 
     init::~init()
     {
+    /*
+        Call exit init functions
+    */
         if(inits[(int)initSystems::SDL])
             SDL_Quit();
 
@@ -100,16 +112,27 @@ namespace multiLib
     rectangle::rectangle(int setX, int setY, int setWidth, int setHeight)
         : x{setX}, y{setY}, width{setWidth}, height{setHeight}
     {
+    /*
+        Construct a rectangle
+
+        Precondition width and height are greater than zero
+    */
         assert((width > 0 && height > 0) && "width and height must be greater than zero");
     }
 
     SDL_Rect rectangle::toRect() const
     {
+    /*
+        Return the rectangles SDL representation
+    */
         return SDL_Rect{x, y, width, height};
     }
 
     rectangle& rectangle::setX(int setX)
     {
+    /*
+        Set the x for the rectangle
+    */
         x = setX;
 
         return *this;
@@ -117,13 +140,21 @@ namespace multiLib
 
     rectangle& rectangle::setY(int setY)
     {
-        x = setY;
+    /*
+        Set the y position for the rectangle
+    */
+        y = setY;
 
         return *this;
     }
 
     rectangle& rectangle::setWidth(int setWidth)
     {
+    /*
+        Set the width of the rectangle
+
+        Precondition setWidth is greater than zero
+    */
         assert(setWidth > 0 && "Width must be greater than zero");
 
         width = setWidth;
@@ -133,6 +164,11 @@ namespace multiLib
 
     rectangle& rectangle::setHeight(int setHeight)
     {
+    /*
+        Set the height for the rectangle
+
+        Precondition setHeight is greater than zero
+    */
         assert(setHeight > 0 && "Width must be greater than zero");
 
         height = setHeight;
