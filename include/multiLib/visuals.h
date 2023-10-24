@@ -33,8 +33,6 @@ namespace multiLib
         virtual const rectangle& srcImage() const =0;
     };
 
-    enum class flash : int { cancel = SDL_FLASH_CANCEL, brief = SDL_FLASH_BRIEFLY, untilUser = SDL_FLASH_UNTIL_FOCUSED};
-
     class renderWindow
     {
         public:
@@ -52,7 +50,6 @@ namespace multiLib
         std::string getTitle() const;
         float getOpacity() const;
 
-        void requestAttention(flash annoyance) const;
         void hideWindow();
         void showWindow();
         void fullScreenWindow();
@@ -67,7 +64,7 @@ namespace multiLib
 
         void clear();
 
-        renderWindow& draw(const drawing& drawable, int destX, int destY);
+        renderWindow& draw(const drawing& drawable, int destX, int destY, int destWidth = 0, int destHeight = 0);
 
         void display() const;
 
@@ -81,6 +78,7 @@ namespace multiLib
     class image : public drawing
     {
         public:
+        image() = default;
         image(const std::string& path, rectangle rect, renderWindow& window);
 
         image(const image& copyFrom) = delete;
@@ -91,8 +89,8 @@ namespace multiLib
 
         ~image() = default;
 
-        inline SDL_Texture* src() const override { return texture.get(); }
-        inline const rectangle& srcImage() const override { return images[index]; }
+        SDL_Texture* src() const override { return texture.get(); }
+        const rectangle& srcImage() const override { return images[index]; }
 
         image& operator++(int);
         image& addFrame(rectangle newRect);
@@ -131,6 +129,7 @@ namespace multiLib
     class message : public drawing
     {
         public:
+        message() = default;
         message(std::string&& setMessage, font&& setFont, rectangle rect, colours setColour, renderWindow& setWindow);
 
         message(const message& copyFrom) = delete;

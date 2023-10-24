@@ -41,6 +41,7 @@ namespace multiLib
     class music : public audio
     {
         public:
+        music() = default;
         explicit music(const std::string& path);
 
         music(const music& copyFrom) = delete;
@@ -73,6 +74,7 @@ namespace multiLib
     class sound : public audio
     {
         public:
+        sound() = default;
         explicit sound(const std::string& path);
         
         sound(const sound& copyFrom) = delete;

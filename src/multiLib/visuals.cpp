@@ -1,8 +1,6 @@
 #include "multiLib/visuals.h"
 
-#include <cassert>
-
-#include "multiLib/errors.h"
+#include "errors.h"
 
 namespace multiLib
 {
@@ -19,7 +17,7 @@ namespace multiLib
         Postcondition SDL_RenderSetLogicalSize returns 0
     */
         {
-            assert( ( width > 0 && height > 0 ) && "window width and height must be greater than zero" );
+            debug_assert(( width > 0 && height > 0 ), "window width and height must be greater than zero" );
             
             window.reset( SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_RESIZABLE) );
 
@@ -64,25 +62,13 @@ namespace multiLib
 
         Postcondition SDL_GetOpacity returns 0 
     */
-        float opacity = 0;
+        float opacity = 0.0f;
 
         bool hasError = SDL_GetWindowOpacity(window.get(), &opacity);
 
         runtime_assert(!hasError, SDL_GetError());
 
         return opacity;
-    }
-
-    void renderWindow::requestAttention(flash annoyannce) const
-    {
-    /*
-        Request the users attention
-
-        Postcondition SDL_FlashWindow returns 0 
-    */
-        bool hasError = SDL_FlashWindow(window.get(), (SDL_FlashOperation)annoyannce);
-
-        runtime_assert(!hasError, SDL_GetError());
     }
 
     void renderWindow::hideWindow()
@@ -122,7 +108,7 @@ namespace multiLib
 
         Postcondition SDL_RenderSetLogical size returns 0
     */
-        assert((width > 0 && height > 0) && "window width and height must be greater than zero");
+        debug_assert((width > 0 && height > 0), "window width and height must be greater than zero");
 
         SDL_SetWindowSize(window.get(), width, height);
 
@@ -174,7 +160,7 @@ namespace multiLib
 
         Postcondition SDL_SetWindowOpacity returns 0
     */
-        assert((opacity >= 0.0f && opacity <= 1.0f) && "opacity must be between 0.0f and 1.0f");
+        debug_assert((opacity >= 0.0f && opacity <= 1.0f), "opacity must be between 0.0f and 1.0f");
 
         bool hasError = SDL_SetWindowOpacity(window.get(), opacity);
 
@@ -209,7 +195,7 @@ namespace multiLib
         
         Postcondition SDL_CreateTextureFromSurface does not return NULL
     */
-        assert( (convert) && "Can not convert a nullptr to a texture");
+        debug_assert((convert), "Can not convert a nullptr to a texture");
 
         SDL_Texture* newTexture = SDL_CreateTextureFromSurface(renderer.get(), convert);
 
@@ -230,15 +216,24 @@ namespace multiLib
         runtime_assert(!hasError, SDL_GetError());
     }
 
-    renderWindow& renderWindow::draw(const drawing& drawable, int destX, int destY)
+    renderWindow& renderWindow::draw(const drawing& drawable, int destX, int destY, int destWidth, int destHeight)
     {
     /*
         render drawable
     
+        Precondition destWidth and destHeight are not less than zero
         Postcondition SDL_RenderCopy returns 0
     */
+        debug_assert((destWidth >= 0 && destHeight >= 0), "destWidth and height must be greater than zero unless they are defaults");
+
+        if(destWidth == 0)
+            destWidth = drawable.srcImage().getWidth();
+
+        if(destHeight == 0)
+            destHeight = drawable.srcImage().getHeight();
+
         //Negate to y for dest because SDL2 quadrents are not right 
-        SDL_Rect dest {destX, -destY, drawable.srcImage().getWidth(), drawable.srcImage().getHeight()};
+        SDL_Rect dest {destX, -destY, destWidth, destHeight}; 
 
         SDL_Rect src {drawable.srcImage().toRect()};
 
@@ -335,7 +330,7 @@ namespace multiLib
 
         Postcondition TTF_OpenFont does not return NULL
     */
-        assert(sdlFont && "sdlFont failed to load");
+        runtime_assert((sdlFont), SDL_GetError());
     }
 
     message::message(std::string&& setMessage, font&& setFont, rectangle rect, colours setColour, renderWindow& setWindow)

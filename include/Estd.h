@@ -2,7 +2,10 @@
 #include <string>
 #include <memory>
 #include <random>
+#include <iostream>
 #include <chrono>
+
+#include "errors.h"
 
 namespace Estd
 {
@@ -29,12 +32,24 @@ namespace Estd
     class randomNumberGenerator
     {
         public:
-        static randomNumberGenerator& get();
+        static randomNumberGenerator& get()
+        {
+            static randomNumberGenerator instance{};
+
+            return instance;
+        }
 
         template<typename T, typename dist = std::conditional_t<std::is_floating_point_v<T>, std::uniform_real_distribution<T>, std::uniform_int_distribution<T>>>
         T generate(T from, T to)
         {
+        /*
+            Generate a random number from from to to
+
+            Concept T is a number
+            Precondition from is less than to
+        */
             static_assert(std::is_arithmetic_v<T>, "generate requires either floating point or integar numbers");
+            debug_assert((from < to), "From should be less than to");
 
             dist distribution{from, to};
 
@@ -69,9 +84,25 @@ namespace Estd
         timer(timer&& moveFrom) = default;
         timer& operator=(timer&& moveFrom) = default;
 
-        ~timer(); 
+        ~timer() { iostreamStop(); }
 
-        void stop() const;
+        template<typename T>
+        T stop() const
+        {
+        /*
+            Return the time since the timer started
+
+            Concept T is a messure of time like std::chrono::milliseconds
+        */
+            std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
+        
+            return std::chrono::duration_cast<T>(end - start);
+        }
+    
+        void iostreamStop() const
+        {
+            std::cout << "Timer " << name << " milliseconds: " << stop<std::chrono::milliseconds>().count() << std::endl; 
+        }
 
         private:
         std::chrono::time_point<std::chrono::steady_clock> start;

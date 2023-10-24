@@ -1,8 +1,6 @@
 #include "multiLib/audio.h"
 
-#include <cassert>
-
-#include "multiLib/errors.h"
+#include "errors.h"
 
 namespace multiLib
 {
@@ -15,7 +13,7 @@ namespace multiLib
         Precondition music path is valid
         Precondition music is FLAC, MP3, Ogg, VOC, WAV, MIDI, MOD, Opus audio format
     */
-        assert(currentMusic && Mix_GetError());
+        runtime_assert(currentMusic, Mix_GetError());
     }
 
     bool music::paused() const
@@ -52,8 +50,8 @@ namespace multiLib
         Precondition setVolume must be between 0 and MIX_MAX_VOLUME
         Precondition music is not fading
     */
-        assert( (setVolume > 0 && setVolume < MIX_MAX_VOLUME) && "music volume must be between 0 and MIX_MAX_VOLUME");
-        assert( !(fading()) && "setVolume should not be called while music is fading");
+        debug_assert((setVolume > 0 && setVolume < MIX_MAX_VOLUME), "music volume must be between 0 and MIX_MAX_VOLUME");
+        debug_assert(!(fading()), "setVolume should not be called while music is fading");
 
         Mix_VolumeMusic(setVolume);
 
@@ -142,7 +140,7 @@ namespace multiLib
         Precondition path is a valid path
         Precondition path is FLAC, MP3, Ogg, VOC, WAV, MIDI, MOD, Opus audio format
     */
-        assert(currentChunk && Mix_GetError());
+        runtime_assert(currentChunk, Mix_GetError());
     }
 
     bool sound::paused() const 
@@ -176,11 +174,11 @@ namespace multiLib
         
         Postcondition Mix_Volume chunk should not return -1
     */
-        assert((setVolume > 0 && setVolume < MIX_MAX_VOLUME) && "sound volume must be between 0 and MIX_MAX_VOLUME");
+        debug_assert((setVolume > 0 && setVolume < MIX_MAX_VOLUME), "sound volume must be between 0 and MIX_MAX_VOLUME");
 
         int hasError = Mix_VolumeChunk(currentChunk.get(), setVolume);
 
-        assert((hasError != -1) && "sound chunk is so how NULL");
+        debug_assert((hasError != -1), "sound chunk is so how NULL");
 
         return *this;
     }
@@ -194,7 +192,7 @@ namespace multiLib
     */
         channel = Mix_PlayChannel(channel, currentChunk.get(), loops); 
 
-        runtime_assert( (channel != -1), SDL_GetError()); 
+        runtime_assert((channel != -1), SDL_GetError()); 
 
         return *this;
     }

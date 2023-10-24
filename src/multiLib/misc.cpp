@@ -8,9 +8,7 @@ extern "C"
     #include <SDL2/SDL_mixer.h>
 }
 
-#include <cassert>
-
-#include "multiLib/errors.h"
+#include "errors.h"
 
 namespace multiLib
 {
@@ -117,7 +115,7 @@ namespace multiLib
 
         Precondition width and height are greater than zero
     */
-        assert((width > 0 && height > 0) && "width and height must be greater than zero");
+        debug_assert((width > 0 && height > 0), "width and height must be greater than zero");
     }
 
     SDL_Rect rectangle::toRect() const
@@ -155,7 +153,7 @@ namespace multiLib
 
         Precondition setWidth is greater than zero
     */
-        assert(setWidth > 0 && "Width must be greater than zero");
+        debug_assert((setWidth > 0), "Width must be greater than zero");
 
         width = setWidth;
 
@@ -169,7 +167,7 @@ namespace multiLib
 
         Precondition setHeight is greater than zero
     */
-        assert(setHeight > 0 && "Width must be greater than zero");
+        debug_assert((setHeight > 0), "Width must be greater than zero");
 
         height = setHeight;
 

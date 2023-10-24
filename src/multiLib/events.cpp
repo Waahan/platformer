@@ -1,6 +1,6 @@
 #include "multiLib/events.h"
 
-#include <cassert>
+#include "errors.h"
 
 namespace multiLib
 {
@@ -49,7 +49,7 @@ namespace multiLib
 
         Precondition add is not a nullptr
     */
-        assert(add && "eventMessager eventHandler can not be nullptr");
+        debug_assert((add), "eventMessager eventHandler can not be nullptr");
 
         eventHandlers.push_back(add);
 
