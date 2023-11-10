@@ -7,9 +7,11 @@
 
 int main()
 {
-    multiLib::init& mainInit = multiLib::init::getInit();
-
-    mainInit.initSystem(multiLib::initSystems::SDL).initSystem(multiLib::initSystems::Image).initSystem(multiLib::initSystems::TTF).initSystem(multiLib::initSystems::Mixer);
+    multiLib::initGuard<std::function<void(void)>> SDL_Guard = multiLib::initSDL();
+    multiLib::initGuard<std::function<void(void)>> Image_Guard = multiLib::initImage();
+    multiLib::initGuard<std::function<void(void)>> TTF_Guard = multiLib::initTTF();
+    multiLib::initGuard<std::function<void(void)>> Mixer_Guard = multiLib::initMixer();
+    multiLib::initGuard<std::function<void(void)>> Audio_Guard = multiLib::openAudio();
 
     multiLib::renderWindow mainWindow{"demo", 1280, 720};
     mainWindow.fullScreenWindow();
@@ -20,19 +22,11 @@ int main()
 
     multiLib::keyboardEvent mainKeyboard{};
 
-    multiLib::music coolMusic{"assets/music.mp4"};
-
-    coolMusic.play();
-
-    float x{}, y{}, speed{0.5f};
-
-    auto prev = std::chrono::steady_clock::now();
-
-    float deltaTime = 0.0f;
+    float x{}, y{}, speed{10};
 
     multiLib::image player{"assets/icon.png", multiLib::rectangle{0, 0, 600, 600}, mainWindow};
 
-    mainKeyboard.keyEventCallback( [&x, &y, speed, &coolMusic, &deltaTime] (multiLib::keyboardKeys key, bool upOrDown)
+    mainKeyboard.keyEventCallback( [&x, &y, speed] (multiLib::keyboardKeys key, bool upOrDown)
     { 
         if(upOrDown)
         {
@@ -40,24 +34,21 @@ int main()
             {
                 case multiLib::keyboardKeys::escape:
                     exit(0);
+
                 case multiLib::keyboardKeys::w:
-                    y += speed * deltaTime;
+                    y += speed;
                     break;
 
                 case multiLib::keyboardKeys::s:
-                    y -= speed * deltaTime;
+                    y -= speed;
                     break;
 
                 case multiLib::keyboardKeys::a: 
-                    x -= speed * deltaTime; 
+                    x -= speed; 
                     break;
                     
                 case multiLib::keyboardKeys::d:
-                    x += speed * deltaTime;
-                    break;
-
-                case multiLib::keyboardKeys::m:
-                    coolMusic.playing() ? coolMusic.pause() : coolMusic.resume();
+                    x += speed;
                     break;
 
                 default:
@@ -70,9 +61,6 @@ int main()
 
     while(true)
     {
-        deltaTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - prev).count() / 100000;
-        prev = std::chrono::steady_clock::now();
-
         mainWindow.clear();
 
         mainWindow.draw(player, x, y, 100, 100);

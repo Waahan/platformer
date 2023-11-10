@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 extern "C"
 {
     #include <SDL2/SDL.h>
@@ -7,29 +9,29 @@ extern "C"
 
 namespace multiLib
 {
-    enum class initSystems : int { SDL = 0, Image, TTF, Mixer};
-
-    class init
+    template<typename T>
+    class initGuard
     {
         public:
-        static init& getInit();
+        initGuard(T destoryFunc) : destoryCallback{destoryFunc} {}
 
-        init& initSystem(initSystems system);
-        inline bool calledInit(initSystems system);
+        initGuard(const initGuard& copyFrom) = delete;
+        initGuard& operator=(const initGuard& copyFrom) = delete;
+
+        initGuard(initGuard&& moveFrom) = default;
+        initGuard& operator=(initGuard&& moveFrom) = default;
+
+        ~initGuard() { destoryCallback(); }
 
         private:
-        init() = default;
-
-        init(const init& copyFrom) = delete;
-        init& operator=(const init& From) = delete;
-
-        init(init&& moveFrom) = delete;
-        init& operator=(init&& moveFrom) = delete;
-
-        ~init();
-
-        bool inits[4]{false};
+        T destoryCallback;
     };
+
+    initGuard<std::function<void(void)>> initSDL();
+    initGuard<std::function<void(void)>> initImage();
+    initGuard<std::function<void(void)>> initTTF();
+    initGuard<std::function<void(void)>> initMixer();
+    initGuard<std::function<void(void)>> openAudio();
 
     class rectangle
     {

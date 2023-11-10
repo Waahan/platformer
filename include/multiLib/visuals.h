@@ -69,6 +69,9 @@ namespace multiLib
         void display() const;
 
         private:
+        void createWindow(const std::string& title);
+        void createRenderer();
+
         Estd::custom_unique_ptr<SDL_Window, SDL_DestroyWindow> window;
         Estd::custom_unique_ptr<SDL_Renderer, SDL_DestroyRenderer> renderer;
 
@@ -110,7 +113,7 @@ namespace multiLib
     class font
     {
         public:
-        font(std::string&& fontPath, int fontSize);
+        explicit font(std::string&& fontPath, int fontSize);
 
         font(const font& moveFrom) = delete;
         font& operator=(const font& From) = delete;
@@ -121,6 +124,10 @@ namespace multiLib
         ~font() = default;
 
         TTF_Font* getFont() const { return sdlFont.get(); }
+
+        fontStyles getStyle() const;
+
+        font& setStyle(fontStyles style);
 
         private:
         Estd::custom_unique_ptr<TTF_Font, TTF_CloseFont> sdlFont;
@@ -160,5 +167,4 @@ namespace multiLib
 
         font messageFont;
     };
-
 } //multiLib

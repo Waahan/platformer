@@ -12,99 +12,82 @@ extern "C"
 
 namespace multiLib
 {
-    init& init::getInit()
+    initGuard<std::function<void(void)>> initSDL()
     {
     /*
-        Create and instance of init once
+        Init SDL2
+        
+        Postcondition SDL_Init returns 0
     */
-        static init instance;
+        bool sdlInitResult = SDL_Init(SDL_INIT_EVERYTHING);
 
-        return instance;
+        runtime_assert(!sdlInitResult, SDL_GetError());
+
+        return initGuard<std::function<void(void)>>{SDL_Quit};
     }
 
-    init& init::initSystem(initSystems system)
-    {
+    initGuard<std::function<void(void)>> initImage()
+    { 
     /*
-        Init a system
+        Init SDL_Image
+
+        Postcondition image init result equals image flags
     */
-        bool initResult = false;
+        int imageInitFlags = IMG_INIT_PNG;
 
-        switch(system)
-        {
-            case initSystems::SDL:
-                {
-                    initResult = SDL_Init(SDL_INIT_EVERYTHING);
-                    runtime_assert(!initResult, SDL_GetError());
-                }
-                break;
-            case initSystems::Image:
-                {
-                    int imgFlags = IMG_INIT_PNG;
-                    int imgResult = 0;
+        int imageInitResult = IMG_Init(imageInitFlags);
 
-                    imgResult = IMG_Init(imgFlags);
-                    runtime_assert((imgResult == imgFlags), SDL_GetError());
-                }
-                break;
+        runtime_assert((imageInitResult == imageInitFlags), SDL_GetError());
 
-            case initSystems::TTF:
-                {
-                    initResult = TTF_Init();
-                    runtime_assert(!initResult, TTF_GetError());
-                }
-                break;
-
-            case initSystems::Mixer:
-                {
-                    int mixFlags = MIX_INIT_MP3;
-                    int mixResult = 0;
-
-                    mixResult = Mix_Init(mixFlags);
-                    runtime_assert((mixResult == mixFlags), Mix_GetError());
-                    
-                    int frequency = 44100;
-                    unsigned short format = MIX_DEFAULT_FORMAT;
-                    int channels = 2;
-                    int chunksize = 2048;
-                    initResult = Mix_OpenAudio(frequency, format, channels, chunksize);
-
-                    runtime_assert(!initResult, Mix_GetError());
-                }
-                break;
-        }
-
-        inits[(int)system] = true;
-
-        return *this;
+        return initGuard<std::function<void(void)>>{IMG_Quit};
     }
 
-    inline bool init::calledInit(initSystems system)
+    initGuard<std::function<void(void)>> initTTF()
     {
     /*
-        Check if a system was inited
+        Init SDL_TTF 
+
+        Postcondition TTF_Init returns 0
     */
-        return inits[(int)system];
+        bool ttfInitResult = TTF_Init();
+        runtime_assert(!ttfInitResult, TTF_GetError());
+
+        return initGuard<std::function<void(void)>>{TTF_Quit};
     }
 
-    init::~init()
+    initGuard<std::function<void(void)>> initMixer()
     {
     /*
-        Call exit init functions
+        Init SDL_Mixer
+
+        Postcondition Mix_Init returns mixFlags
     */
-        if(inits[(int)initSystems::SDL])
-            SDL_Quit();
+        int mixFlags = MIX_INIT_MP3;
 
-        if(inits[(int)initSystems::Image])
-           IMG_Quit();
+        int mixResult = Mix_Init(mixFlags);
 
-        if(inits[(int)initSystems::TTF])
-            TTF_Quit();
+        runtime_assert((mixResult == mixFlags), Mix_GetError());
+        
+        return initGuard<std::function<void(void)>>{Mix_Quit};
+    }
 
-        if(inits[(int)initSystems::Mixer])
-        {
-            Mix_Quit();
-            Mix_CloseAudio();
-        }
+    initGuard<std::function<void(void)>> openAudio()
+    {
+    /*
+        Open SDL audio
+
+        Postcondition Mix_OpenAudio returns 0
+    */
+        int frequency = 44100;
+        unsigned short format = MIX_DEFAULT_FORMAT;
+        int channels = 2;
+        int chunksize = 2048;
+
+        bool initResult = Mix_OpenAudio(frequency, format, channels, chunksize);
+
+        runtime_assert(!initResult, Mix_GetError());
+
+        return initGuard<std::function<void(void)>>{Mix_CloseAudio};  
     }
 
     rectangle::rectangle(int setX, int setY, int setWidth, int setHeight)

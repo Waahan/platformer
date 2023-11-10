@@ -12,25 +12,12 @@ namespace multiLib
 
         Precondition width and height are greater than zero
 
-        Postcondition SDL_CreateWindow does not return NULL
-        Postcondition SDL_CreateRenderer does not return NULL
         Postcondition SDL_RenderSetLogicalSize returns 0
     */
-        {
-            debug_assert(( width > 0 && height > 0 ), "window width and height must be greater than zero" );
-            
-            window.reset( SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_RESIZABLE) );
+        debug_assert(( width > 0 && height > 0 ), "window width and height must be greater than zero" );
 
-            runtime_assert(window, SDL_GetError());
-        }
-
-        {
-            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-
-            renderer.reset( SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED) );
-
-            runtime_assert(renderer, SDL_GetError());
-        }
+        createWindow(title);
+        createRenderer();
 
         {
             bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
@@ -252,6 +239,37 @@ namespace multiLib
         SDL_RenderPresent(renderer.get());
     }
 
+    void renderWindow::createWindow(const std::string& title)
+    {
+    /*
+        Create a window
+        
+        Precondition width and height are valid
+        Precondition logicalWidht and height are set
+
+        Postcondition SDL_CreateWindow is not null
+    */
+        window.reset( SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, logicalWidth, logicalHeight, SDL_WINDOW_RESIZABLE) );
+
+        runtime_assert(window, SDL_GetError());
+    }
+
+    void renderWindow::createRenderer()
+    {
+    /*
+        Create a renderer
+
+        Precondition createWindow was called first
+
+        Postcondition SDL_CreateRenderer does not return null
+    */
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
+        renderer.reset( SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED) );
+
+        runtime_assert(renderer, SDL_GetError());
+    }
+
     image::image(const std::string& path, rectangle rect, renderWindow& window)
         : texture{window.getImage(path)}, images{}, index{}, imageWindow{window}
     {
@@ -292,31 +310,31 @@ namespace multiLib
         switch(colour)
         {
             case colours::black:
-                return SDL_Colour{0, 0, 0, 1};
+                return SDL_Colour{0, 0, 0, 0};
 
             case colours::white: 
-                return SDL_Colour{255, 255, 255, 1};
+                return SDL_Colour{255, 255, 255, 0};
 
             case colours::red:
-                return SDL_Colour{255, 0, 0, 1};
+                return SDL_Colour{255, 0, 0, 0};
 
             case colours::orange: 
-                return SDL_Colour{255, 165, 0, 1};
+                return SDL_Colour{255, 165, 0, 0};
 
             case colours::yellow:
-                return SDL_Colour{255, 255, 0, 1};
+                return SDL_Colour{255, 255, 0, 0};
 
             case colours::green:
-                return SDL_Colour{0, 255, 0, 1};
+                return SDL_Colour{0, 255, 0, 0};
 
             case colours::blue:
-                return SDL_Colour{0, 0, 255, 1};
+                return SDL_Colour{0, 0, 255, 0};
 
             case colours::indigo:
-                return SDL_Colour{75, 0, 130, 1};
+                return SDL_Colour{75, 0, 130, 0};
 
             case colours::violet:
-                return SDL_Colour{238, 130, 238, 1};
+                return SDL_Colour{238, 130, 238, 0};
         }
 
         return SDL_Colour{0, 0, 0, 1};
@@ -331,6 +349,24 @@ namespace multiLib
         Postcondition TTF_OpenFont does not return NULL
     */
         runtime_assert((sdlFont), SDL_GetError());
+    }
+
+    fontStyles font::getStyle() const
+    {
+    /*
+        Get the fonts style
+    */
+        return static_cast<fontStyles>(TTF_GetFontStyle(sdlFont.get()));
+    }
+
+    font& font::setStyle(fontStyles style)
+    {
+    /*
+        Set the fonts style
+    */
+        TTF_SetFontStyle(sdlFont.get(), (int)style);
+
+        return *this;
     }
 
     message::message(std::string&& setMessage, font&& setFont, rectangle rect, colours setColour, renderWindow& setWindow)
