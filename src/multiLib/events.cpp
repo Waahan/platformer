@@ -96,4 +96,45 @@ namespace multiLib
     */
         keyCallFunc(static_cast<keyboardKeys>(event.keysym.scancode), upOrDown);
     }
+
+    bool mouseEvent::useEvent(const SDL_Event& event)
+    {
+    /*
+        Claim and handle mouse events
+    */
+        switch(event.type)
+        {
+            case SDL_MOUSEMOTION:
+                return true;
+
+            case SDL_MOUSEBUTTONDOWN:
+                handleMouseButtonEvents(event.button, true);
+                return true;
+
+            case SDL_MOUSEBUTTONUP:
+                handleMouseButtonEvents(event.button, false);
+                return true;
+
+            case SDL_MOUSEWHEEL:
+                return true;
+        }
+
+        return false;
+    }
+
+    void mouseEvent::mouseButtonCallback(std::function<void(bool, mouseButtons, int, int)>&& setCallback)
+    {
+    /*
+        Set the callback for mouse button
+    */
+        mouseButtonCallFunc = std::move(setCallback);
+    }
+
+    void mouseEvent::handleMouseButtonEvents(const SDL_MouseButtonEvent& event, bool upOrDown)
+    {
+    /*
+        handle mouse button events
+    */
+        mouseButtonCallFunc(upOrDown, static_cast<mouseButtons>(event.button), event.x, event.y); 
+    }
 } //multiLib

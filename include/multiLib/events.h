@@ -117,4 +117,36 @@ namespace multiLib
 
         std::function<void(keyboardKeys, bool)> keyCallFunc;
     };
+
+    enum class mouseButtons : int
+    {
+        left = SDL_BUTTON_LEFT,
+        middle = SDL_BUTTON_MIDDLE,
+        right = SDL_BUTTON_RIGHT,
+        other1 = SDL_BUTTON_X1,
+        other2 = SDL_BUTTON_X2,
+    };
+
+    class mouseEvent : public eventHandler
+    {
+        public:
+        mouseEvent() = default;
+
+        mouseEvent(const mouseEvent& copyFrom) = default;
+        mouseEvent& operator=(const mouseEvent& copyFrom) = default;
+
+        mouseEvent(mouseEvent&& moveFrom) = default;
+        mouseEvent& operator=(mouseEvent&& moveFrom) = default;
+
+        ~mouseEvent() = default;
+
+        bool useEvent(const SDL_Event& event) override;
+
+        void mouseButtonCallback(std::function<void(bool, mouseButtons, int, int)>&& setCallback);
+
+        private:
+        void handleMouseButtonEvents(const SDL_MouseButtonEvent& event, bool upOrDown);
+
+        std::function<void(bool, mouseButtons, int, int)> mouseButtonCallFunc;
+    };
 } //multiLib
