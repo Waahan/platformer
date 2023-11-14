@@ -143,10 +143,13 @@ namespace multiLib
         bool useEvent(const SDL_Event& event) override;
 
         void mouseButtonCallback(std::function<void(bool, mouseButtons, int, int)>&& setCallback);
+        void mouseMoveCallback(std::function<void(int, int, int, int)>&& setCallback);
 
         private:
         void handleMouseButtonEvents(const SDL_MouseButtonEvent& event, bool upOrDown);
+        void handleMouseMotionEvents(const SDL_MouseMotionEvent& event);
 
         std::function<void(bool, mouseButtons, int, int)> mouseButtonCallFunc;
+        std::function<void(int, int, int, int)> mouseMoveCallFunc;
     };
 } //multiLib

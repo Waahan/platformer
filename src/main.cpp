@@ -22,7 +22,11 @@ int main()
 
     multiLib::keyboardEvent mainKeyboard{};
 
+    multiLib::mouseEvent mainMouse{};
+
     float x{}, y{}, speed{10};
+
+    bool mouseDown{false};
 
     multiLib::image player{"assets/icon.png", multiLib::rectangle{0, 0, 600, 600}, mainWindow};
 
@@ -58,6 +62,22 @@ int main()
     });
 
     mainEvent.addEventHandler(&mainKeyboard);
+
+    mainMouse.mouseButtonCallback( [&mouseDown](bool upOrDown, multiLib::mouseButtons button, int mouseX, int mouseY)
+    {
+        mouseDown = upOrDown;
+    });
+
+    mainMouse.mouseMoveCallback( [&mouseDown, &x, &y](int mouseX, int mouseY, int xrel, int yrel)
+    {
+        if(mouseDown)
+        {
+            x = mouseX;
+            y = mouseY;
+        }
+    });
+
+    mainEvent.addEventHandler(&mainMouse);
 
     while(true)
     {

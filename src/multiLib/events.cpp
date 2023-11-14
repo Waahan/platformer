@@ -105,6 +105,7 @@ namespace multiLib
         switch(event.type)
         {
             case SDL_MOUSEMOTION:
+                handleMouseMotionEvents(event.motion);
                 return true;
 
             case SDL_MOUSEBUTTONDOWN:
@@ -129,12 +130,28 @@ namespace multiLib
     */
         mouseButtonCallFunc = std::move(setCallback);
     }
+    
+    void mouseEvent::mouseMoveCallback(std::function<void(int, int, int, int)>&& setCallback)
+    {
+    /*
+        Set the callback for mouse movement
+    */
+        mouseMoveCallFunc = std::move(setCallback);
+    }
 
     void mouseEvent::handleMouseButtonEvents(const SDL_MouseButtonEvent& event, bool upOrDown)
     {
     /*
-        handle mouse button events
+        Handle mouse button events
     */
         mouseButtonCallFunc(upOrDown, static_cast<mouseButtons>(event.button), event.x, event.y); 
+    }
+
+    void mouseEvent::handleMouseMotionEvents(const SDL_MouseMotionEvent& event)
+    {
+    /*
+        Handle mouse motion events
+    */
+        mouseMoveCallFunc(event.x, -event.y, event.xrel, event.yrel);
     }
 } //multiLib
