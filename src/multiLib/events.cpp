@@ -117,6 +117,7 @@ namespace multiLib
                 return true;
 
             case SDL_MOUSEWHEEL:
+                handleMouseWheelEvents(event.wheel);
                 return true;
         }
 
@@ -139,6 +140,14 @@ namespace multiLib
         mouseMoveCallFunc = std::move(setCallback);
     }
 
+    void mouseEvent::mouseWheelCallback(std::function<void(float, float)>&& setCallback)
+    {
+    /*
+        Set the callback for mouse wheel events
+    */
+        mouseWheelCallFunc = std::move(setCallback);
+    }
+
     void mouseEvent::handleMouseButtonEvents(const SDL_MouseButtonEvent& event, bool upOrDown)
     {
     /*
@@ -152,6 +161,15 @@ namespace multiLib
     /*
         Handle mouse motion events
     */
+        //Y is negative because I don't like the SDL window y 
         mouseMoveCallFunc(event.x, -event.y, event.xrel, event.yrel);
+    }
+
+    void mouseEvent::handleMouseWheelEvents(const SDL_MouseWheelEvent& event)
+    {
+    /*
+        Handle mouse wheel events
+    */
+        mouseWheelCallFunc(event.preciseX, event.preciseY);
     }
 } //multiLib
