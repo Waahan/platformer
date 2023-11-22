@@ -1,0 +1,129 @@
+extern "C"
+{
+#ifdef __WINDOWS__
+Windows headers
+
+Windows socket representations 
+
+#else
+Unix headers
+
+Unix socket representations 
+#endif
+}
+
+enum protocals { udp, tcp }
+enum ipVersion { ipv4, ipv6 }
+
+/*
+    Provide a clear and conherient sockaddr structs interface
+*/
+networkingConfig:
+    /*
+        Create a blank config for networkConfig
+    */
+    default constructor than zeros it all
+
+    /*
+        Create a config from sockaddr 
+    */
+    constructor that takes sockaddr and a switch statment for sa_family
+
+    /*
+        Set sin_family or sin6_family
+    */
+    setIpVersion(ipVersion)
+
+    /*
+        Set the sin_addr or sin6_addr with inet_pton
+    */
+    setIpaddress(string, ipVersion) 
+
+    /*
+        Set sin_port or sin6_port 
+
+        Note first convert to network byte order
+    */
+    setPort(unsigned short) //Use host to network short 
+
+    /*
+        Return the ip version enum of the current sockaddr struct 
+    */
+    getIpAddressVersion()
+
+    /*
+        Get a somewhat human readable ip address string
+    */
+    getIpAddress() //Use inet_ntop
+
+    /*
+        Get the port
+
+        Note first convert to host byte order
+    */
+    getPort()
+
+    /*
+        Get the sockaddr for the current union
+    */
+    sockaddrRep()
+
+    private:
+    ipVersion currentVersion
+    union of sockaddr_in and sockaddr_in6
+
+/*
+    A simple client
+*/
+client:
+    /*
+        Create a socket that is connected to the server
+    */
+    connect(ipVersion clientIpVersion, ipVersion serverIpVersion, ipAddress serverIpAddress, port serverPort, protocal serverProtocal)
+
+    /*
+        Send and receive data from server
+
+        Precondition connect to server
+    */
+    send(buf, sizeofBuff)
+    receive(intoBuff, buffSize)
+
+    /*
+        Disconnect the client socket from the server
+    */
+    disconnect()
+
+/*
+    A simple server
+*/
+server:
+    /*
+        Start up a udp or tcp server
+    */
+    start(ipversion serverIpVersion, protocal serverProtocal, port serverPort)
+
+    /*
+        Accept connections and add it to the vector
+    */
+    accept(int backlog = 0)
+
+    /*
+        Send and recive from all clients
+    */
+    send(buf, sizeofBuff)
+    receive(intoBuff, maxSize)
+
+    /*
+        Send and recive from a specific client
+    */
+    send(buf, sizeofBuff, client)
+    receive(buf, sizeOfBuff, client)
+
+    /*
+        Close down the server
+    */
+    stop()
+
+    private:
+    vector of networkingConfig
