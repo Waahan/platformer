@@ -42,7 +42,14 @@ namespace networking
     class networkingConfig
     {
         public:
+        /*
+            Use set functions to initalize what you need
+        */
         networkingConfig() : socketAddress{} {}
+        
+        /*
+            Convert ipv4 and ipv6 sockaddr to networkConfig
+        */
         networkingConfig(struct sockaddr&& convert);
 
         networkingConfig(const networkingConfig& copyFrom) = default;
@@ -53,14 +60,27 @@ namespace networking
 
         ~networkingConfig() = default;
 
+        /*
+            Get data about networkConfig
+
+            Precondition these values must already have been set
+        */
         ipVersion getIpVersion() const;
         std::string getIpAddress() const;
         portType getPort() const;
 
+        /*
+            Set data about networkConfig
+
+            Precondition you must set the ip version first
+        */
         networkingConfig& setIpVersion(ipVersion version);
         networkingConfig& setIpAddress(const std::string& ipAddress);
         networkingConfig& setPort(portType port);
 
+        /*
+            Return the sockaddr representation for lowlevel networking functions
+        */
         const struct sockaddr* sockaddrRep() const;
 
         private:
@@ -74,11 +94,69 @@ namespace networking
         sockaddrUnion socketAddress;
     };
 
-    class server
+    enum class connectionStatus : int {failure = -1, disconnected, success};
+    
+    /*
+        A simple client to connect, send and receive data from a server
+    */
+    class client
     {
+        public:
+        /*
+            Set client attributes
+        */
+        client(ipVersion version, protocal setProtocal);
+
+        client(const client& copyFrom) = delete;
+        client& operator=(const client& copyFrom) = delete;
+
+        client(client&& moveFrom) = default;
+        client& operator=(client&& moveFrom) = default;
+        
+        /*
+            Close socket handle
+        */
+        ~client();
+
+        /*
+            Get information about the client
+        */
+        ipVersion getIpVersion() const;
+        protocal getProtocal() const;
+
+        /*
+            Connect to a server 
+
+            Note dns does not work so ip addresses only
+        */
+        connectionStatus connect(ipVersion serverIpVersion, const std::string& serverIpAddress, portType serverPort);
+
+        /*
+            Send and get data from server
+
+            Note receive overwrites string
+        */
+        connectionStatus send(const std::string& data);
+        connectionStatus receive(std::string& data);
+
+        /*
+            Close the socket
+        */
+        void disconnect();
+
+        private:
+        ipVersion clientIpVersion;
+        protocal clientProtocal;
+        socketType socketHandle;
     };
 
-    class client
+    /*
+        Use client like standard library streams
+    */
+    client& operator<<(client& into, const std::string& data);
+    client& operator>>(client& out, std::string& data);
+
+    class server
     {
     };
 } //networking

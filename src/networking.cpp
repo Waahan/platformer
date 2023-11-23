@@ -1,5 +1,7 @@
 #include "networking.h"
 
+#include <memory>
+
 #include "errors.h"
 
 namespace
@@ -85,6 +87,30 @@ namespace
         closesocket(destroySocket);
     #else
         close(destroySocket);
+    #endif
+    }
+
+    #ifdef __WINDOWS__
+    typedef int sizeType;
+    #else 
+    typedef size_t sizeType;
+    #endif
+
+    inline sizeType sendData(socketType to, const char* data, sizeType sizeofData)
+    {
+    #ifdef __WINDOWS__
+        return send(to, data, sizeOfData, 0);
+    #else
+        return send(to, (void*)data, sizeofData, 0);
+    #endif
+    }
+
+    inline sizeType receiveData(socketType from, char* buffer, sizeType sizeofBuffer)
+    {
+    #ifdef __WINDOWS__
+        return recv(from, buffer, sizeOfBuffer, 0);
+    #else
+        return recv(from, (void*)buffer, sizeofBuffer, 0);
     #endif
     }
 } //namespace
@@ -222,5 +248,100 @@ namespace networking
         Return the sockaddr representation of the class 
     */
         return (struct sockaddr*)&socketAddress;
+    }
+
+    client::client(ipVersion version, protocal setProtocal)
+    {
+    /*
+        Open a socket from data about client
+
+        Postcondition socket does not return -1
+    */
+        clientIpVersion = version;
+        clientProtocal = setProtocal;
+        
+        socketHandle = socket((int)clientIpVersion, (int)clientProtocal, 0);
+
+        runtime_assert((socketHandle != -1), "Failed to open socket error code: " + getNetworkingError());
+    }
+
+    client::~client()
+    {
+    /*
+        Close socket handle
+    */
+        disconnect();
+    }
+
+    connectionStatus client::connect(ipVersion serverVersion, const std::string& serverIpAddress, portType serverPort)
+    {
+    /*
+        Connect to a server
+    */
+        networkingConfig serverConfig;
+
+        serverConfig.setIpVersion(serverVersion).setIpAddress(serverIpAddress).setPort(serverPort);
+
+        return (connectionStatus)::connect(socketHandle, serverConfig.sockaddrRep(), sizeof(serverConfig.sockaddrRep()));
+    }
+
+    connectionStatus client::send(const std::string& data)
+    {
+    /*
+        Send data to the connected to server
+
+        Precondition connected to server
+    */
+        sizeType dataSize = data.size() * sizeof(std::string::value_type);
+        sizeType result = sendData(socketHandle, data.c_str(), dataSize);
+        
+        return (result > 0) ? connectionStatus::success : (connectionStatus)result;
+    }
+
+    connectionStatus client::receive(std::string& data)
+    {
+    /*
+        Receive data from connect server
+
+        Precondition connected to server
+    */
+        std::unique_ptr<char> buffer{new char[100]};
+        sizeType bufferSize = sizeof(char) * 100;
+
+        sizeType result = receiveData(socketHandle, buffer.get(), bufferSize);
+
+        data.assign(buffer.get(), bufferSize);
+
+        return (result > 0) ? connectionStatus::success : (connectionStatus)result;
+    }
+
+    void client::disconnect()
+    {
+    /*
+        Disconnect from server by closing the socket handle
+    */
+        cleanUpSocket(socketHandle);
+
+        socketHandle = -1;
+    }
+
+    client& operator<<(client& into, const std::string& data)
+    {
+    /*
+        Send data to server
+    */
+        into.send(data);
+
+        return into;
+    }
+
+    client& operator>>(client& out, std::string& data)
+    {
+    /*
+        Get data from server
+    */
+        out.receive(data);
+
+        return out;
     }
 } //networking

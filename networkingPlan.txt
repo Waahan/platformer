@@ -79,20 +79,22 @@ client:
     /*
         Create a socket that is connected to the server
     */
-    connect(ipVersion clientIpVersion, ipVersion serverIpVersion, ipAddress serverIpAddress, port serverPort, protocal serverProtocal)
+    connect(ipVersion clientIpVersion, ipVersion serverIpVersion, string serverIpAddress, port serverPort, protocal serverProtocal)
 
     /*
         Send and receive data from server
 
         Precondition connect to server
     */
-    send(buffer, sizeofBuffer)
-    receive(intoBuffer, bufferSize)
+    //Use std::string::size() * sizeof(std::string::value_type)
+    connectionStatus send(const std::string& buffer)
+    connectionStatus receive(std::string& intoBuffer)
 
     /*
         Disconnect the client socket from the server
     */
     disconnect()
+//Client operator << for send and >> for recive
 
 /*
     A simple server

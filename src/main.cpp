@@ -2,6 +2,7 @@
 #include "multiLib/visuals.h"
 #include "multiLib/audio.h"
 #include "multiLib/events.h"
+#include "networking.h"
 
 #include <thread>
 
