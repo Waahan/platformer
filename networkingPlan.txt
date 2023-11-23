@@ -86,8 +86,8 @@ client:
 
         Precondition connect to server
     */
-    send(buf, sizeofBuff)
-    receive(intoBuff, buffSize)
+    send(buffer, sizeofBuffer)
+    receive(intoBuffer, bufferSize)
 
     /*
         Disconnect the client socket from the server
@@ -111,14 +111,14 @@ server:
     /*
         Send and recive from all clients
     */
-    send(buf, sizeofBuff)
-    receive(intoBuff, maxSize)
+    send(buffer, sizeofBuffer)
+    receive(intoBuffer, maxSize)
 
     /*
         Send and recive from a specific client
     */
-    send(buf, sizeofBuff, client)
-    receive(buf, sizeOfBuff, client)
+    send(buffer, sizeofBuff, client)
+    receive(intoBuffer, sizeOfBuffer, client)
 
     /*
         Close down the server

@@ -15,8 +15,12 @@
     #define runtime_assert(condition, errorMessage) \
     if(!condition) \
         std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
+
+    #define runtime_error(errorMessage) \
+    std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
 #else
-    #define runtime_assert(condition, errorFunc) ((void)0)
+    #define runtime_assert(condition, errorMessage) ((void)0)
+    #define runtime_error(errorMessage) ((void)0)
 #endif
 
 #ifdef NDEBUG
@@ -29,4 +33,7 @@
     #define debug_assert(condition, errorMessage) \
     if(!condition) \
         std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
+
+    #define debug_error(errorMessage) \
+    std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
 #endif
