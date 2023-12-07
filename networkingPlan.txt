@@ -1,131 +1,154 @@
-extern "C"
-{
-#ifdef __WINDOWS__
-Windows headers
+Plan for the networking code
+HEADER File
 
-Windows socket representations 
+defined types between unix and winsock
+socketType is socket SOCKET for windows and in for unix
 
-#else
-Unix headers
+Init function has nothing if not windows returns a initGuard to close 
 
-Unix socket representations 
-#endif
-}
+class networkConfig
+    constructor that takes sockaddr
+    constructor that zeros sockaddr struct
 
-enum protocals { udp, tcp }
-enum ipVersion { ipv4, ipv6 }
-
-/*
-    Provide a clear and conherient sockaddr structs interface
-*/
-networkingConfig:
-    /*
-        Create a blank config for networkConfig
-    */
-    default constructor than zeros it all
-
-    /*
-        Create a config from sockaddr 
-    */
-    constructor that takes sockaddr and a switch statment for sa_family
-
-    /*
-        Set sin_family or sin6_family
-    */
     setIpVersion(ipVersion)
 
-    /*
-        Set the sin_addr or sin6_addr with inet_pton
-    */
-    setIpaddress(string, ipVersion) 
+    setIpAddress(string)
+    setPort(short)
 
-    /*
-        Set sin_port or sin6_port 
-
-        Note first convert to network byte order
-    */
-    setPort(unsigned short) //Use host to network short 
-
-    /*
-        Return the ip version enum of the current sockaddr struct 
-    */
-    getIpAddressVersion()
-
-    /*
-        Get a somewhat human readable ip address string
-    */
-    getIpAddress() //Use inet_ntop
-
-    /*
-        Get the port
-
-        Note first convert to host byte order
-    */
-    getPort()
-
-    /*
-        Get the sockaddr for the current union
-    */
     sockaddrRep()
+    size()
 
     private:
-    ipVersion currentVersion
-    union of sockaddr_in and sockaddr_in6
+    ipVersion currentIpVersion
 
-/*
-    A simple client
-*/
-client:
-    /*
-        Create a socket that is connected to the server
-    */
-    connect(ipVersion clientIpVersion, ipVersion serverIpVersion, string serverIpAddress, port serverPort, protocal serverProtocal)
+    union 
+        sockaddr_in socketAddressIpv4
+        sockaddr_in6 socketAddressIpv6
 
-    /*
-        Send and receive data from server
+class networkingExchange
+    bool canReceive()
 
-        Precondition connect to server
-    */
-    //Use std::string::size() * sizeof(std::string::value_type)
-    connectionStatus send(const std::string& buffer)
-    connectionStatus receive(std::string& intoBuffer)
+    send(string)
+    receive(string)
 
-    /*
-        Disconnect the client socket from the server
-    */
-    disconnect()
-//Client operator << for send and >> for recive
+operator<<(networkingExchange, string)
+operator>>(networkingExchange, string)
 
-/*
-    A simple server
-*/
-server:
-    /*
-        Start up a udp or tcp server
-    */
-    start(ipversion serverIpVersion, protocal serverProtocal, port serverPort)
+class serverClient
+{
+    networkingConfig
+    socketType socketHandle
 
-    /*
-        Accept connections and add it to the vector
-    */
-    accept(int backlog = 0)
+    destructor that closes socket handle
+}
 
-    /*
-        Send and recive from all clients
-    */
-    send(buffer, sizeofBuffer)
-    receive(intoBuffer, maxSize)
+class server : networkingExchange
+    constructor takes ipversion, protocal (tcp or udp) and port
 
-    /*
-        Send and recive from a specific client
-    */
-    send(buffer, sizeofBuff, client)
-    receive(intoBuffer, sizeOfBuffer, client)
+    listen(backlog = 0)
 
-    /*
-        Close down the server
-    */
-    stop()
+    bool pendingConnection() use select with fd_set
+
+    string accept() return the uuid of the new client
+
+    canReceive()
+
+    send(string) global send
+    receive(string) global receive
+
+    sendTo(string, uuid)
+    receiveFrom(string, uuid)
+    
+    closeClientConnection(uuid) remove a client from the map
+
+    stop() close all client connection and server connections
 
     private:
-    vector of networkingConfig
+    ipVersion
+    socketType socketHandle
+    fd_set readSocketFrom
+
+    map of clients using uuids and serverClient struct 
+
+class client : networkingExchange
+    constructor that takes ipVersion and the protocal
+    
+    connect(networkingConfig server)
+
+    canReceive()
+
+    send(string)
+    receive(string)
+
+    sendTo(string, networkingConfig)
+    receiveFrom(string, networkingConfig)
+
+    close()
+
+    private:
+    ipVersion
+    socketType socketHandle
+
+SRC File
+int networkingErrorCode()
+    for windows returns WSAGetLastError and for unix returns errno
+
+type is tcp or udp
+socketType socket(ipVersion, type, protocal = 0)
+    newSocket  = socket()
+
+    define constexpr notSocket is -1 for unix or INVALID_SOCKET for windows
+
+    if notSocket 
+        call networkingErrorCode if failed
+
+    return newSocket
+
+void closeSocket(socketType)
+    if windows call closesocket 
+    else if unix call close
+
+    check if the return value is 0
+        if it isn't call networkingErrorCode
+
+renames for network and host number conversion
+
+hostToNetworkShort htons
+HostToNetworkLong htonl
+networkToHostShort ntohs
+networkToHostLong ntohl
+
+void ipAddressToBinary(ipVersion, const std::string& ipAddressString, void* destination)
+    check dest is a valid pointer
+    make sure ipVersion is ipv4 or ipv6
+
+    make sure inet_pton returns 1
+        if it does not call getNetworkingError
+
+string binaryToIpAddress(ipVersion, void* binaryIp)
+    check binaryIp is not null
+    check if ipVersion is ipv4 or ipv6
+
+    writeTo should be at least be able to handle 46 characters
+
+    make sure inet_ntop does not return NULL if it does call networkingErrorCode
+
+    create a string from writeTo and return it
+
+bool canReceive(socketType)
+    use ioctl for unix and ioctlsocket for windows
+
+    check if its negative one 
+
+    return result
+
+connectionStatus sendString(socketType, const std::string& buffer, networkingConfig* recipient)
+    get the max using sizeof(std::string::value_type) and buffer.size
+
+    use sendto but check if recipient is null
+
+connectionStatus recieveString(socketType, std::string& buffer, networkingConfig* sender, const int max)
+    allocate some char memory 
+    get the size by multiplying sizeof(char) * max
+
+    use recvfrom

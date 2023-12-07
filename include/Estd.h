@@ -2,8 +2,6 @@
 #include <string>
 #include <memory>
 #include <random>
-#include <iostream>
-#include <chrono>
 
 #include "errors.h"
 
@@ -73,39 +71,5 @@ namespace Estd
         std::mt19937 ranGenerator;
     };
 
-    class timer
-    {
-        public:
-        timer(const std::string& timerName = "Default") : start(std::chrono::steady_clock::now()), name{timerName} {}
-
-        timer(const timer& copyFrom) = default;
-        timer& operator=(const timer& copyFrom) = default;
-
-        timer(timer&& moveFrom) = default;
-        timer& operator=(timer&& moveFrom) = default;
-
-        ~timer() { iostreamStop(); }
-
-        template<typename T>
-        T stop() const
-        {
-        /*
-            Return the time since the timer started
-
-            Concept T is a messure of time like std::chrono::milliseconds
-        */
-            std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
-        
-            return std::chrono::duration_cast<T>(end - start);
-        }
-    
-        void iostreamStop() const
-        {
-            std::cout << "Timer " << name << " milliseconds: " << stop<std::chrono::milliseconds>().count() << std::endl; 
-        }
-
-        private:
-        std::chrono::time_point<std::chrono::steady_clock> start;
-        std::string name;
-    };
+    std::string generateUUID(int length = 20);
 } //Estd

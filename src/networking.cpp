@@ -1,11 +1,61 @@
 #include "networking.h"
 
-#include <memory>
+#ifdef __WINDOWS__
+#else
+    #include <errno.h>
+#endif
 
 #include "errors.h"
 
 namespace
 {
+    int getNetworkingErrorCode()
+    {
+    /*
+        Get error code for unix or windows
+    */
+    #ifdef __WINDOWS__
+        return WSAGetLastError();
+    #else
+        return errno;
+    #endif
+    }
+
+    socketType createSocket(networking::ipVersion setIpVersion, networking::protocal setProtocal)
+    {
+    /*
+        Create a socket
+
+        Postcondition does not return invalid socket
+    */
+        socketType newSocket = socket((int)setIpVersion, (int)setProtocal, 0);
+    
+    #ifdef __WINDOWS__ 
+        constexpr const int socketError = INVALID_SOCKET;
+    #else
+        constexpr const int socketError = -1;
+    #endif
+
+        runtime_assert((newSocket != socketError), "Error failed to create socket. Error code: " + getNetworkingErrorCode());
+
+        return newSocket;
+    }
+
+    void closeSocket(socketType socketHandle)
+    {
+    /*
+        Close a socket
+
+        Postcondition close socket function returns 0 
+    */
+    #ifdef __WINDOWS__
+        int closeSocketResult = closesocket(socketHandle);
+    #else
+        int closeSocketResult = close(socketHandle);
+    #endif
+        runtime_assert((closeSocketResult == 0), "Failed to close socket. Error code: " + getNetworkingErrorCode());
+    }
+
     /*
         Because of how bits are stored you have to convert to and from network byte order
         with these functions
@@ -30,88 +80,39 @@ namespace
         return ntohl(networkLong);
     }
 
-    inline int getNetworkingError()
-    {
-    #ifdef __WINDOWS__
-        return WSAGetLastError();
-    #else
-        return errno;
-    #endif
-    }
-
-    /*
-        Convert ip addresses to and from binary
-    */
-    inline void ipAddressTextToBinary(networking::ipVersion version, const char* ipAddressString, void* destination)
+    void ipAddressToBinary(networking::ipVersion ipAddressIpVersion, const std::string& ipAddress, void* destination)
     {
     /*
-        Write ip address into destination 
+        Write the human reable string ipAddress to a binary ip address at destinaion
 
-        Precondition destination is not NULL
-        Precondition ipAddressString is not NULL
-
+        Precondition destination is not null
         Postcondition inet_pton returns 1
     */
-        debug_assert(ipAddressString, "Must have a valid ip address string");
-        debug_assert(destination, "Must have a valid place to write binary ip");
+        debug_assert((destination), "Error can not use nullptr pointer to write binary ip to");
 
-        int doesNotHaveError = inet_pton((int)version, ipAddressString, destination);
-
-        runtime_assert((doesNotHaveError == 1), "Failed to convert ip address Error code: " + doesNotHaveError);
+        runtime_assert((inet_pton((int)ipAddressIpVersion, ipAddress.c_str(), destination) == 1), "Error unable to convert ip string to binary. Error code: " + getNetworkingErrorCode());
     }
 
-    inline std::string ipAddressFromBinaryToText(networking::ipVersion version, const void* binaryAddress)
+    std::string binaryToIpAddress(networking::ipVersion ipAddressIpVersion, const void* binaryIp)
     {
     /*
-        Convert binary ip addres to a human readable ip address
-        
-        Precondition valid binaryAddress pointer
+        Make binary ip into a human readable string
+
+        Precondition binaryIp is not null
     */
-        debug_assert(binaryAddress, "Invalid binary address");
+        debug_assert((binaryIp), "Error can not convert null to ip address string");
 
-        constexpr const int maxIpAddressSize = 45;
+        constexpr const int maxIpAddressSize = 46;
+        constexpr const size_t ipAddressBufferSize = sizeof(std::string::value_type) * maxIpAddressSize;
 
-        //Add one for the NULL terminator
-        char buffer[maxIpAddressSize + 1];
+        char ipAddressBuffer[maxIpAddressSize];
+        char* ipAddressBufferPointer = &ipAddressBuffer[0];
 
-        const char* ipAddressString = inet_ntop((int)version, binaryAddress, buffer, maxIpAddressSize + 1);
+        const char* ipAddressString = inet_ntop((int)ipAddressIpVersion, binaryIp, ipAddressBufferPointer, ipAddressBufferSize);
 
-        runtime_assert(ipAddressString, "Error in converting binary ip: " + getNetworkingError());
+        runtime_assert((ipAddressString), "Error in converting binary ip to string. Error code: " + getNetworkingErrorCode());
 
-        return ipAddressString;
-    }
-
-    inline void cleanUpSocket(socketType destroySocket)
-    {
-    #ifdef __WINDOWS__
-        closesocket(destroySocket);
-    #else
-        close(destroySocket);
-    #endif
-    }
-
-    #ifdef __WINDOWS__
-    typedef int sizeType;
-    #else 
-    typedef size_t sizeType;
-    #endif
-
-    inline sizeType sendData(socketType to, const char* data, sizeType sizeofData)
-    {
-    #ifdef __WINDOWS__
-        return send(to, data, sizeOfData, 0);
-    #else
-        return send(to, (void*)data, sizeofData, 0);
-    #endif
-    }
-
-    inline sizeType receiveData(socketType from, char* buffer, sizeType sizeofBuffer)
-    {
-    #ifdef __WINDOWS__
-        return recv(from, buffer, sizeOfBuffer, 0);
-    #else
-        return recv(from, (void*)buffer, sizeofBuffer, 0);
-    #endif
+        return std::string(ipAddressString);
     }
 } //namespace
 
@@ -127,13 +128,13 @@ namespace networking
         switch(convert.sa_family)
         {
             case AF_INET:
-                currentVersion = ipVersion::ipv4;
-                socketAddress.ipv4SocketAddress = std::move((struct sockaddr_in&&)convert);
+                currentIpVersion = ipVersion::ipv4;
+                socketAddressIpv4 = std::move((struct sockaddr_in&&)convert);
                 break;
 
             case AF_INET6:
-                currentVersion = ipVersion::ipv6;
-                socketAddress.ipv6SocketAddress = std::move((struct sockaddr_in6&&)convert);
+                currentIpVersion = ipVersion::ipv6;
+                socketAddressIpv6 = std::move((struct sockaddr_in6&&)convert);
                 break;
 
             default:
@@ -149,7 +150,7 @@ namespace networking
 
         Precondition the ipVersion has been set
     */
-        return currentVersion;
+        return currentIpVersion;
     }
 
     std::string networkingConfig::getIpAddress() const 
@@ -159,13 +160,13 @@ namespace networking
 
         Precondition the ip address has been set
     */
-        switch(currentVersion)
+        switch(currentIpVersion)
         {
             case ipVersion::ipv4:
-                return ipAddressFromBinaryToText(currentVersion, (void*)&socketAddress.ipv4SocketAddress.sin_addr);
+                return binaryToIpAddress(currentIpVersion, (void*)&socketAddressIpv4.sin_addr);
 
             case ipVersion::ipv6:
-                return ipAddressFromBinaryToText(currentVersion, (void*)&socketAddress.ipv6SocketAddress.sin6_addr);
+                return binaryToIpAddress(currentIpVersion, (void*)&socketAddressIpv6.sin6_addr);
         }
 
         return "Failed to get ip address";
@@ -176,13 +177,13 @@ namespace networking
     /*
         Return a port number from socketaddr
     */
-        switch(currentVersion)
+        switch(currentIpVersion)
         {
             case ipVersion::ipv4:
-                return networkToHostShort(socketAddress.ipv4SocketAddress.sin_port);
+                return networkToHostShort(socketAddressIpv4.sin_port);
 
             case ipVersion::ipv6:
-                return networkToHostShort(socketAddress.ipv6SocketAddress.sin6_port);
+                return networkToHostShort(socketAddressIpv6.sin6_port);
         }
 
         return 0;
@@ -193,7 +194,7 @@ namespace networking
     /*
         Set the current ip address version
     */
-        currentVersion = version;
+        currentIpVersion = version;
 
         return *this;
     }
@@ -205,14 +206,14 @@ namespace networking
 
         Precondition ip address is valid
     */
-        switch(currentVersion)
+        switch(currentIpVersion)
         {
             case ipVersion::ipv4:
-                ipAddressTextToBinary(currentVersion, ipAddress.c_str(), (void*)&socketAddress.ipv4SocketAddress.sin_addr);
+                ipAddressToBinary(currentIpVersion, ipAddress.c_str(), (void*)&socketAddressIpv4.sin_addr);
                 break;
 
             case ipVersion::ipv6:
-                ipAddressTextToBinary(currentVersion, ipAddress.c_str(), (void*)&socketAddress.ipv6SocketAddress.sin6_addr);
+                ipAddressToBinary(currentIpVersion, ipAddress.c_str(), (void*)&socketAddressIpv6.sin6_addr);
                 break;
         }
 
@@ -228,14 +229,14 @@ namespace networking
     */
         debug_assert((port >= 0 && port <= 65535), "Invalid port number");
 
-        switch(currentVersion)
+        switch(currentIpVersion)
         {
             case ipVersion::ipv4:
-                socketAddress.ipv4SocketAddress.sin_port = hostToNetworkShort(port);
+                socketAddressIpv4.sin_port = hostToNetworkShort(port);
                 break;
 
             case ipVersion::ipv6:
-                socketAddress.ipv6SocketAddress.sin6_port = hostToNetworkShort(port);
+                socketAddressIpv6.sin6_port = hostToNetworkShort(port);
                 break;
         }
 
@@ -247,101 +248,46 @@ namespace networking
     /*
         Return the sockaddr representation of the class 
     */
-        return (struct sockaddr*)&socketAddress;
-    }
+        switch(currentIpVersion)
+        {
+            case ipVersion::ipv4:
+                return (struct sockaddr*)&socketAddressIpv4; 
 
-    client::client(ipVersion version, protocal setProtocal)
+            case ipVersion::ipv6:
+                return (struct sockaddr*)&socketAddressIpv6; 
+        }
+ 
+        return nullptr;
+    }
+    
+    struct sockaddr* networkingConfig::sockaddrRep() 
     {
     /*
-        Open a socket from data about client
-
-        Postcondition socket does not return -1
+        Return the sockaddr representation of the class 
     */
-        clientIpVersion = version;
-        clientProtocal = setProtocal;
-        
-        socketHandle = socket((int)clientIpVersion, (int)clientProtocal, 0);
+        switch(currentIpVersion)
+        {
+            case ipVersion::ipv4:
+                return (struct sockaddr*)&socketAddressIpv4;
 
-        runtime_assert((socketHandle != -1), "Failed to open socket error code: " + getNetworkingError());
+            case ipVersion::ipv6:
+                return (struct sockaddr*)&socketAddressIpv6;
+        }
+
+        return nullptr;
     }
 
-    client::~client()
+    size_t networkingConfig::size()
     {
-    /*
-        Close socket handle
-    */
-        disconnect();
-    }
+        switch(currentIpVersion)
+        {
+            case ipVersion::ipv4:
+                return sizeof(socketAddressIpv4);
 
-    connectionStatus client::connect(ipVersion serverVersion, const std::string& serverIpAddress, portType serverPort)
-    {
-    /*
-        Connect to a server
-    */
-        networkingConfig serverConfig;
+            case ipVersion::ipv6:
+                return sizeof(socketAddressIpv6);
+        }
 
-        serverConfig.setIpVersion(serverVersion).setIpAddress(serverIpAddress).setPort(serverPort);
-
-        return (connectionStatus)::connect(socketHandle, serverConfig.sockaddrRep(), sizeof(serverConfig.sockaddrRep()));
-    }
-
-    connectionStatus client::send(const std::string& data)
-    {
-    /*
-        Send data to the connected to server
-
-        Precondition connected to server
-    */
-        sizeType dataSize = data.size() * sizeof(std::string::value_type);
-        sizeType result = sendData(socketHandle, data.c_str(), dataSize);
-        
-        return (result > 0) ? connectionStatus::success : (connectionStatus)result;
-    }
-
-    connectionStatus client::receive(std::string& data)
-    {
-    /*
-        Receive data from connect server
-
-        Precondition connected to server
-    */
-        std::unique_ptr<char> buffer{new char[100]};
-        sizeType bufferSize = sizeof(char) * 100;
-
-        sizeType result = receiveData(socketHandle, buffer.get(), bufferSize);
-
-        data.assign(buffer.get(), bufferSize);
-
-        return (result > 0) ? connectionStatus::success : (connectionStatus)result;
-    }
-
-    void client::disconnect()
-    {
-    /*
-        Disconnect from server by closing the socket handle
-    */
-        cleanUpSocket(socketHandle);
-
-        socketHandle = -1;
-    }
-
-    client& operator<<(client& into, const std::string& data)
-    {
-    /*
-        Send data to server
-    */
-        into.send(data);
-
-        return into;
-    }
-
-    client& operator>>(client& out, std::string& data)
-    {
-    /*
-        Get data from server
-    */
-        out.receive(data);
-
-        return out;
+        return -1;
     }
 } //networking
