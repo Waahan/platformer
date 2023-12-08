@@ -16,6 +16,7 @@ extern "C"
     typedef SOCKET socketType;
     typedef int socketLengthType;
     typedef unsigned short portType;
+
 #else
     #include <sys/socket.h>
     #include <sys/types.h> 
@@ -59,7 +60,7 @@ namespace networking
         struct sockaddr* sockaddrRep();
         const struct sockaddr* sockaddrRep() const;
 
-        size_t size();
+        socketLengthType size() const;
 
         private:
         ipVersion currentIpVersion;
@@ -70,4 +71,45 @@ namespace networking
             sockaddr_in6 socketAddressIpv6;
         };
     };
+
+    enum class connectionStatus : int { 
+    #ifdef __WINDOWS__
+        error = SOCKET_ERROR,
+    #else
+        error = -1, 
+    #endif
+        disconnected = 0, 
+        connected = 1 
+    };
+
+    class networkingExchange
+    {
+        public:
+        networkingExchange() = default;
+
+        networkingExchange(const networkingExchange& copyFrom) = delete;
+        networkingExchange& operator=(const networkingExchange& copyFrom) = delete;
+
+        networkingExchange(networkingExchange&& moveFrom) = delete;
+        networkingExchange& operator=(networkingExchange&& moveFrom) = delete;
+
+        virtual ~networkingExchange() = default;
+        
+        virtual connectionStatus send(const std::string& buffer) =0;
+        virtual connectionStatus receive(std::string& buffer) =0;
+    };
+
+    inline networkingExchange& operator<<(networkingExchange& os, const std::string& buffer)
+    {
+        os.send(buffer);
+
+        return os;
+    }
+
+    inline networkingExchange& operator>>(networkingExchange& is, std::string& buffer)
+    {
+        is.receive(buffer);
+
+        return is;
+    }
 } //Networking

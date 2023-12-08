@@ -12,7 +12,7 @@ class networkConfig
 
     setIpVersion(ipVersion)
 
-    setIpAddress(string)
+    setIpAddress(string) 
     setPort(short)
 
     sockaddrRep()
@@ -26,8 +26,6 @@ class networkConfig
         sockaddr_in6 socketAddressIpv6
 
 class networkingExchange
-    bool canReceive()
-
     send(string)
     receive(string)
 
@@ -71,7 +69,7 @@ class server : networkingExchange
     map of clients using uuids and serverClient struct 
 
 class client : networkingExchange
-    constructor that takes ipVersion and the protocal
+    constructor that takes ipVersion and the protocal must bind port when using udp
     
     connect(networkingConfig server)
 
@@ -111,6 +109,11 @@ void closeSocket(socketType)
     check if the return value is 0
         if it isn't call networkingErrorCode
 
+void bind(socketType, networkingConfig)
+    bind socket
+    handle if does not return 0
+    
+
 renames for network and host number conversion
 
 hostToNetworkShort htons
@@ -134,13 +137,6 @@ string binaryToIpAddress(ipVersion, void* binaryIp)
     make sure inet_ntop does not return NULL if it does call networkingErrorCode
 
     create a string from writeTo and return it
-
-bool canReceive(socketType)
-    use ioctl for unix and ioctlsocket for windows
-
-    check if its negative one 
-
-    return result
 
 connectionStatus sendString(socketType, const std::string& buffer, networkingConfig* recipient)
     get the max using sizeof(std::string::value_type) and buffer.size

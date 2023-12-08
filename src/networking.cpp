@@ -1,15 +1,24 @@
 #include "networking.h"
 
+#include <memory>
+
 #ifdef __WINDOWS__
+    typedef char* exchangeType;
+    typedef int exchangeLengthType;
+    typedef int exchangeReturnType;
 #else
     #include <errno.h>
+
+    typedef void* exchangeType;
+    typedef int exchangeLengthType;
+    typedef ssize_t exchangeReturnType;
 #endif
 
 #include "errors.h"
 
 namespace
 {
-    int getNetworkingErrorCode()
+    inline int getNetworkingErrorCode()
     {
     /*
         Get error code for unix or windows
@@ -21,7 +30,7 @@ namespace
     #endif
     }
 
-    socketType createSocket(networking::ipVersion setIpVersion, networking::protocal setProtocal)
+    inline socketType createSocket(networking::ipVersion setIpVersion, networking::protocal setProtocal)
     {
     /*
         Create a socket
@@ -41,7 +50,7 @@ namespace
         return newSocket;
     }
 
-    void closeSocket(socketType socketHandle)
+    inline void closeSocket(socketType socketHandle)
     {
     /*
         Close a socket
@@ -54,6 +63,16 @@ namespace
         int closeSocketResult = close(socketHandle);
     #endif
         runtime_assert((closeSocketResult == 0), "Failed to close socket. Error code: " + getNetworkingErrorCode());
+    }
+
+    inline void bindSocket(socketType socketHandle, const networking::networkingConfig& howToBind)
+    {
+    /*
+        Bind a socket based on networkConfig
+
+        Postcondition bind returns 0
+    */
+        runtime_assert(bind(socketHandle, howToBind.sockaddrRep(), howToBind.size()) == 0, "Failed to bind socket. Error code: " + getNetworkingErrorCode());
     }
 
     /*
@@ -80,7 +99,7 @@ namespace
         return ntohl(networkLong);
     }
 
-    void ipAddressToBinary(networking::ipVersion ipAddressIpVersion, const std::string& ipAddress, void* destination)
+    inline void ipAddressToBinary(networking::ipVersion ipAddressIpVersion, const std::string& ipAddress, void* destination)
     {
     /*
         Write the human reable string ipAddress to a binary ip address at destinaion
@@ -93,7 +112,7 @@ namespace
         runtime_assert((inet_pton((int)ipAddressIpVersion, ipAddress.c_str(), destination) == 1), "Error unable to convert ip string to binary. Error code: " + getNetworkingErrorCode());
     }
 
-    std::string binaryToIpAddress(networking::ipVersion ipAddressIpVersion, const void* binaryIp)
+    inline std::string binaryToIpAddress(networking::ipVersion ipAddressIpVersion, const void* binaryIp)
     {
     /*
         Make binary ip into a human readable string
@@ -113,6 +132,44 @@ namespace
         runtime_assert((ipAddressString), "Error in converting binary ip to string. Error code: " + getNetworkingErrorCode());
 
         return std::string(ipAddressString);
+    }
+
+    networking::connectionStatus sendString(socketType socketHandle, const std::string& buffer, networking::networkingConfig* recipient = nullptr)
+    {
+    /*
+        send a string to the client and return if the client got it
+    */
+        const exchangeLengthType bufferSize = sizeof(std::string::value_type) * buffer.size();
+
+        exchangeReturnType sendResult{};
+    
+        if(recipient)
+            sendResult = sendto(socketHandle, (exchangeType)buffer.c_str(), bufferSize, 0, recipient->sockaddrRep(), recipient->size());
+        else
+            sendResult = send(socketHandle, (exchangeType)buffer.c_str(), bufferSize, 0);
+
+        //If its above zero its the number of bytes sent
+        return (sendResult > 0) ? networking::connectionStatus::connected : (networking::connectionStatus)sendResult;
+    }
+
+    networking::connectionStatus receiveString(socketType socketHandle, std::string& buffer, networking::networkingConfig* sender = nullptr, const int bufferMax = 100)
+    {
+    /*
+        Receive a string from sender
+    */
+        const exchangeLengthType bufferReceiveMax = sizeof(std::string::value_type) * bufferMax;
+        std::unique_ptr<char> writeTo{ new char[bufferReceiveMax] };
+
+        socketLengthType senderSocketAddressLength = sender->size();
+
+        exchangeReturnType receiveResult{};
+
+        if(sender)
+            receiveResult = recvfrom(socketHandle, (exchangeType)writeTo.get(), bufferReceiveMax, 0, sender->sockaddrRep(), &senderSocketAddressLength);
+        else
+            receiveResult = recv(socketHandle, (exchangeType)writeTo.get(), bufferReceiveMax, 0);
+
+        return (receiveResult > 0) ? networking::connectionStatus::connected : (networking::connectionStatus)receiveResult;
     }
 } //namespace
 
@@ -277,7 +334,7 @@ namespace networking
         return nullptr;
     }
 
-    size_t networkingConfig::size()
+    socketLengthType networkingConfig::size() const
     {
         switch(currentIpVersion)
         {
