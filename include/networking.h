@@ -96,7 +96,12 @@ namespace networking
         virtual ~networkingExchange() = default;
         
         virtual connectionStatus send(const std::string& buffer) =0;
-        virtual connectionStatus receive(std::string& buffer) =0;
+        virtual connectionStatus receive(std::string& buffer, const int maxReceive) =0;
+
+        virtual connectionStatus send(const std::string& buffer, const networkingConfig& receipient) =0;
+        virtual connectionStatus receive(std::string& buffer, const int maxReceive, networkingConfig& sender) =0;
+
+        virtual void close() =0;
     };
 
     inline networkingExchange& operator<<(networkingExchange& os, const std::string& buffer)
@@ -108,8 +113,38 @@ namespace networking
 
     inline networkingExchange& operator>>(networkingExchange& is, std::string& buffer)
     {
-        is.receive(buffer);
+        constexpr const int maxReceive = 100;
+
+        is.receive(buffer, maxReceive);
 
         return is;
     }
+
+    class client : public networkingExchange
+    {
+        public:
+        client(ipVersion setIpVersion, protocal setProtocal);
+
+        client(const client& copyFrom) = delete;
+        client& operator=(const client& copyFrom) = delete;
+
+        client(client&& moveFrom) = delete;
+        client& operator=(client&& moveFrom) = delete;
+
+        ~client() override;
+
+        connectionStatus connect(const networkingConfig& serverConfig);
+
+        connectionStatus send(const std::string& buffer) override;
+        connectionStatus receive(std::string& buffer, const int maxReceive) override;
+
+        connectionStatus send(const std::string& buffer, const networkingConfig& receipient) override;
+        connectionStatus receive(std::string& buffer, const int maxReceive, networkingConfig& sender) override;
+
+        void close() override;
+
+        private:
+        ipVersion version;
+        socketType socketHandle;
+    };
 } //Networking

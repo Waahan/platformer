@@ -73,8 +73,6 @@ class client : networkingExchange
     
     connect(networkingConfig server)
 
-    canReceive()
-
     send(string)
     receive(string)
 

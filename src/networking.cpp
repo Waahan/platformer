@@ -134,7 +134,7 @@ namespace
         return std::string(ipAddressString);
     }
 
-    networking::connectionStatus sendString(socketType socketHandle, const std::string& buffer, networking::networkingConfig* recipient = nullptr)
+    networking::connectionStatus sendString(socketType socketHandle, const std::string& buffer, const networking::networkingConfig* recipient = nullptr)
     {
     /*
         send a string to the client and return if the client got it
@@ -152,7 +152,7 @@ namespace
         return (sendResult > 0) ? networking::connectionStatus::connected : (networking::connectionStatus)sendResult;
     }
 
-    networking::connectionStatus receiveString(socketType socketHandle, std::string& buffer, networking::networkingConfig* sender = nullptr, const int bufferMax = 100)
+    networking::connectionStatus receiveString(socketType socketHandle, std::string& buffer, const int bufferMax = 100, networking::networkingConfig* sender = nullptr)
     {
     /*
         Receive a string from sender
@@ -160,14 +160,18 @@ namespace
         const exchangeLengthType bufferReceiveMax = sizeof(std::string::value_type) * bufferMax;
         std::unique_ptr<char> writeTo{ new char[bufferReceiveMax] };
 
-        socketLengthType senderSocketAddressLength = sender->size();
-
         exchangeReturnType receiveResult{};
 
         if(sender)
+        {
+            socketLengthType senderSocketAddressLength = sender->size();
+
             receiveResult = recvfrom(socketHandle, (exchangeType)writeTo.get(), bufferReceiveMax, 0, sender->sockaddrRep(), &senderSocketAddressLength);
+        }
         else
             receiveResult = recv(socketHandle, (exchangeType)writeTo.get(), bufferReceiveMax, 0);
+
+        buffer = (const char*)writeTo.get();
 
         return (receiveResult > 0) ? networking::connectionStatus::connected : (networking::connectionStatus)receiveResult;
     }
@@ -336,6 +340,9 @@ namespace networking
 
     socketLengthType networkingConfig::size() const
     {
+    /*
+        Return the current size of sockaddr
+    */
         switch(currentIpVersion)
         {
             case ipVersion::ipv4:
@@ -346,5 +353,82 @@ namespace networking
         }
 
         return -1;
+    }
+
+    client::client(ipVersion setIpVersion, protocal setProtocal)
+        : version{setIpVersion}, socketHandle{createSocket(version, setProtocal)}
+    {
+    /*
+        Create a client with a socket handle
+
+        Note connection less protocal sockets must be bound
+    */
+        if(setProtocal == protocal::udp)
+            //Udp is connectionless so you have to bind it
+            bindSocket(socketHandle, networkingConfig{}.setIpVersion(version));
+    }
+
+    client::~client()
+    {
+    /*
+        Free the clients socketHandle
+    */
+        close();
+    }
+
+    connectionStatus client::connect(const networkingConfig& serverConfig)
+    {
+    /*
+        Connect to a server
+    */
+        int connectionResult = ::connect((socketType)socketHandle, serverConfig.sockaddrRep(), serverConfig.size());
+
+        return (connectionResult == 0) ? connectionStatus::connected : connectionStatus::error;
+    }
+
+    connectionStatus client::send(const std::string& buffer)
+    {
+    /*
+        Send data to a server 
+
+        Precondition connected to a server
+    */
+        return sendString(socketHandle, buffer);
+    }
+    
+    connectionStatus client::receive(std::string& buffer, const int maxReceive)
+    {
+    /*
+        Get data from the connected server
+
+        Precondition connected to a server
+    */
+        return receiveString(socketHandle, buffer, maxReceive);
+    }
+
+    connectionStatus client::send(const std::string& buffer, const networkingConfig& receipient)
+    {
+    /*
+        Sends data to recepient
+    */
+        return sendString(socketHandle, buffer, &receipient);
+    }
+
+    connectionStatus client::receive(std::string& buffer, const int maxReceive, networkingConfig& sender)
+    {
+    /*
+        Get data from the sender
+
+        Precondition you are already connected to the sender 
+    */
+        return receiveString(socketHandle, buffer, maxReceive, &sender);
+    } 
+
+    void client::close()
+    {
+    /*
+        Close the client socket and server connection   
+    */
+        closeSocket(socketHandle);
     }
 } //networking
