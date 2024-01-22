@@ -1,129 +1,109 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
+#include <tuple>
+#include <memory>
+#include <functional>
 
-extern "C"
-{
-#ifdef __WINDOWS__
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <iphlpapi.h>
-
-    //Windows socket representations
-    typedef SOCKET socketType;
-    typedef int socketLengthType;
-    typedef unsigned short portType;
-
+//For operating system specific headers 
+#if defined(__WINDOWS__)
 #else
-    #include <sys/socket.h>
-    #include <sys/types.h> 
-    #include <arpa/inet.h>
-    #include <unistd.h>
+    //Unix headers 
+    #include <cerrno> // Error handling
+    #include <cstring> // Also for error handling (std::strerror)
 
-    //Unix socket representations
-    typedef int socketType;
-    typedef socklen_t socketLengthType;
-    typedef in_port_t portType;
+    extern "C"
+    {
+        #include <sys/types.h> // For addrinfo
+        #include <sys/socket.h> // For socket and addrinfo
+        #include <netdb.h> // For addrinfo
+        #include <unistd.h> //For close
+    }
 #endif
-}
+ 
+#include "errors.h"
+#include "Estd.h"
 
 namespace networking
 {
-    enum class ipVersion : int { ipv4 = AF_INET, ipv6 = AF_INET6 };
-    enum class protocal : int { tcp = SOCK_STREAM, udp = SOCK_DGRAM };
+    #if defined(__WINDOWS__)
+        //Winsock specific stuff
+    #else 
+        //Unix specific stuff
+        typedef int socketType;
 
-    class networkingConfig
+        //Because winsock needs WSAStartup and WSACleanup
+        inline void endNetworking() { /* No init no cleanup */ }
+        inline Estd::initGuard<std::function<void(void)>> startNetworking(const std::string) { return Estd::initGuard<std::function<void(void)>>(endNetworking); /* No init function for unix socket api */ }
+
+        inline std::string getSocketError() { return std::strerror(errno); } //Exposes socket errors for client and server send and recv errors
+
+        inline void closeSocket(socketType destroySocket) { debug_assert(close(destroySocket) == 0, "Failed to close socket. Error: " + getSocketError()); } //Because of the return type of close and custom_unique_ptrs templates
+    #endif
+
+    class socketAddress
     {
         public:
-        networkingConfig() = default;
-        networkingConfig(struct sockaddr&& convert);
+        socketAddress() = delete;
 
-        networkingConfig(const networkingConfig& copyFrom) = default;
-        networkingConfig& operator=(const networkingConfig& copyFrom) = default;
+        socketAddress(const socketAddress& copyFrom) = default;
+        socketAddress& operator=(const socketAddress& copyFrom) = default;
 
-        networkingConfig(networkingConfig&& moveFrom) = default;
-        networkingConfig& operator=(networkingConfig&& moveFrom) = default;
+        socketAddress(socketAddress&& moveFrom) = default;
+        socketAddress& operator=(socketAddress&& moveFrom) = default;
 
-        ~networkingConfig() = default;
-
-        ipVersion getIpVersion() const;
-        std::string getIpAddress() const;
-        portType getPort() const;
-
-        networkingConfig& setIpVersion(ipVersion setIpVersion);
-        networkingConfig& setIpAddress(const std::string& ipAddress);
-        networkingConfig& setPort(portType portNumber);
-
-        struct sockaddr* sockaddrRep();
-        const struct sockaddr* sockaddrRep() const;
-
-        socketLengthType size() const;
+        ~socketAddress() = default;
 
         private:
-        ipVersion currentIpVersion;
-
-        union
-        {
-            sockaddr_in socketAddressIpv4; 
-            sockaddr_in6 socketAddressIpv6;
-        };
+        //socketAddress(addrinfo* addressInfo); //Note ownership of addrinfo is passed to socketAddress, must be filled in already
     };
 
-    enum class connectionStatus : int { 
-    #ifdef __WINDOWS__
-        error = SOCKET_ERROR,
-    #else
-        error = -1, 
-    #endif
-        disconnected = 0, 
-        connected = 1 
+    enum connectionStatus
+    {
+        error = -1,
+        connected,
+        disconnected,
     };
 
-    class networkingExchange
+    class baseSocketClass
     {
         public:
-        networkingExchange() = default;
+        baseSocketClass() = default;
 
-        networkingExchange(const networkingExchange& copyFrom) = delete;
-        networkingExchange& operator=(const networkingExchange& copyFrom) = delete;
+        baseSocketClass(const baseSocketClass& copyFrom) = delete;
+        baseSocketClass& operator=(const baseSocketClass& copyFrom) = delete;
 
-        networkingExchange(networkingExchange&& moveFrom) = delete;
-        networkingExchange& operator=(networkingExchange&& moveFrom) = delete;
+        baseSocketClass(baseSocketClass&& moveFrom) = delete;
+        baseSocketClass& operator=(baseSocketClass&& moveFrom) = delete;
 
-        virtual ~networkingExchange() = default;
-        
-        virtual connectionStatus send(const std::string& buffer) =0;
-        virtual connectionStatus receive(std::string& buffer, const int maxReceive) =0;
+        virtual ~baseSocketClass() {}
 
-        virtual connectionStatus send(const std::string& buffer, const networkingConfig& receipient) =0;
-        virtual connectionStatus receive(std::string& buffer, const int maxReceive, networkingConfig& sender) =0;
-
-        virtual void close() =0;
+        virtual bool pendingData() const =0;
     };
 
-    inline networkingExchange& operator<<(networkingExchange& os, const std::string& buffer)
-    {
-        os.send(buffer);
-
-        return os;
-    }
-
-    inline networkingExchange& operator>>(networkingExchange& is, std::string& buffer)
-    {
-        constexpr const int maxReceive = 100;
-
-        is.receive(buffer, maxReceive);
-
-        return is;
-    }
-
-    class client : public networkingExchange
+    class baseClient : public baseSocketClass
     {
         public:
-        client(ipVersion setIpVersion, protocal setProtocal);
+        baseClient() = default;
+
+        baseClient(const baseClient& copyFrom) = delete;
+        baseClient& operator=(const baseClient& copyFrom) = delete;
+
+        baseClient(baseClient&& moveFrom) = delete;
+        baseClient& operator=(baseClient&& moveFrom) = delete;
+
+        ~baseClient() override {}
+
+        bool pendingData() const override =0;
+
+        virtual connectionStatus send(const std::string& data) =0;
+        virtual connectionStatus receive(std::string& buffer, int max) =0;
+    };
+
+    class client : public baseClient 
+    {    
+        public:
+        client() = default;
 
         client(const client& copyFrom) = delete;
         client& operator=(const client& copyFrom) = delete;
@@ -131,20 +111,31 @@ namespace networking
         client(client&& moveFrom) = delete;
         client& operator=(client&& moveFrom) = delete;
 
-        ~client() override;
+        ~client() override {}
 
-        connectionStatus connect(const networkingConfig& serverConfig);
+        bool pendingData() const override =0;
 
-        connectionStatus send(const std::string& buffer) override;
-        connectionStatus receive(std::string& buffer, const int maxReceive) override;
+        virtual connectionStatus connect(const std::string& hostname, const std::string& port) =0;
 
-        connectionStatus send(const std::string& buffer, const networkingConfig& receipient) override;
-        connectionStatus receive(std::string& buffer, const int maxReceive, networkingConfig& sender) override;
-
-        void close() override;
-
-        private:
-        ipVersion version;
-        socketType socketHandle;
+        connectionStatus send(const std::string& data) override =0;
+        connectionStatus receive(std::string& buffer, int max) override =0;
     };
-} //Networking
+
+    class server : public baseSocketClass
+    {
+        public:
+        server() = default;
+
+        server(const server& copyFrom) = delete;
+        server& operator=(const server& copFrom) = delete;
+        
+        server(server&& moveFrom) = delete;
+        server& operator=(server&& moveFrom) = delete;
+
+        ~server() override {}
+
+        bool pendingData() const override =0;
+
+        virtual std::unique_ptr<baseClient> acceptClient() const =0;
+    };
+} //networking

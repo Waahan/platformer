@@ -27,6 +27,24 @@ namespace Estd
     template<typename T, void (*destroyFunction)(T*)>
     using custom_unique_ptr = std::unique_ptr<T, customDelete<T, destroyFunction>>;
 
+    template<typename T>
+    class initGuard
+    {
+        public:
+        initGuard(T destoryFunc) : destoryCallback{destoryFunc} {}
+
+        initGuard(const initGuard& copyFrom) = delete;
+        initGuard& operator=(const initGuard& copyFrom) = delete;
+
+        initGuard(initGuard&& moveFrom) = default;
+        initGuard& operator=(initGuard&& moveFrom) = default;
+
+        ~initGuard() { destoryCallback(); }
+
+        private:
+        T destoryCallback;
+    };
+
     class randomNumberGenerator
     {
         public:

@@ -12,7 +12,7 @@ extern "C"
 
 namespace multiLib
 {
-    initGuard<std::function<void(void)>> initSDL()
+    Estd::initGuard<std::function<void(void)>> initSDL()
     {
     /*
         Init SDL2
@@ -23,10 +23,10 @@ namespace multiLib
 
         runtime_assert(!sdlInitResult, SDL_GetError());
 
-        return initGuard<std::function<void(void)>>{SDL_Quit};
+        return Estd::initGuard<std::function<void(void)>>{SDL_Quit};
     }
 
-    initGuard<std::function<void(void)>> initImage()
+    Estd::initGuard<std::function<void(void)>> initImage()
     { 
     /*
         Init SDL_Image
@@ -39,10 +39,10 @@ namespace multiLib
 
         runtime_assert((imageInitResult == imageInitFlags), SDL_GetError());
 
-        return initGuard<std::function<void(void)>>{IMG_Quit};
+        return Estd::initGuard<std::function<void(void)>>{IMG_Quit};
     }
 
-    initGuard<std::function<void(void)>> initTTF()
+    Estd::initGuard<std::function<void(void)>> initTTF()
     {
     /*
         Init SDL_TTF 
@@ -52,10 +52,10 @@ namespace multiLib
         bool ttfInitResult = TTF_Init();
         runtime_assert(!ttfInitResult, TTF_GetError());
 
-        return initGuard<std::function<void(void)>>{TTF_Quit};
+        return Estd::initGuard<std::function<void(void)>>{TTF_Quit};
     }
 
-    initGuard<std::function<void(void)>> initMixer()
+    Estd::initGuard<std::function<void(void)>> initMixer()
     {
     /*
         Init SDL_Mixer
@@ -68,10 +68,10 @@ namespace multiLib
 
         runtime_assert((mixResult == mixFlags), Mix_GetError());
         
-        return initGuard<std::function<void(void)>>{Mix_Quit};
+        return Estd::initGuard<std::function<void(void)>>{Mix_Quit};
     }
 
-    initGuard<std::function<void(void)>> openAudio()
+    Estd::initGuard<std::function<void(void)>> openAudio()
     {
     /*
         Open SDL audio
@@ -87,7 +87,7 @@ namespace multiLib
 
         runtime_assert(!initResult, Mix_GetError());
 
-        return initGuard<std::function<void(void)>>{Mix_CloseAudio};  
+        return Estd::initGuard<std::function<void(void)>>{Mix_CloseAudio};  
     }
 
     rectangle::rectangle(int setX, int setY, int setWidth, int setHeight)

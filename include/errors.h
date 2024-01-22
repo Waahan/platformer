@@ -10,17 +10,23 @@
 //Temp fix
 #define BUILD_RUNTIME_ERRORS 1 
 
-#ifdef BUILD_RUNTIME_ERRORS
+#if BUILD_RUNTIME_ERRORS == 1
+
     #include <iostream>
+
     #define runtime_assert(condition, errorMessage) \
     if(!condition) \
         std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
 
     #define runtime_error(errorMessage) \
     std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
+
 #else
+
     #define runtime_assert(condition, errorMessage) ((void)0)
+
     #define runtime_error(errorMessage) ((void)0)
+
 #endif
 
 #ifdef NDEBUG
@@ -30,10 +36,12 @@
     I made my own assert because I don't like the c librarys assert
 */
     #include <iostream>
+
     #define debug_assert(condition, errorMessage) \
     if(!condition) \
         std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
 
     #define debug_error(errorMessage) \
     std::cerr << "Error: File: " << __FILE__ << " Function:  "<< __func__ << " Line: " << __LINE__ << " Error message: " << errorMessage << std::endl
+
 #endif

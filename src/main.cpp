@@ -8,11 +8,11 @@
 
 int main()
 {
-    multiLib::initGuard<std::function<void(void)>> SDL_Guard = multiLib::initSDL();
-    multiLib::initGuard<std::function<void(void)>> Image_Guard = multiLib::initImage();
-    multiLib::initGuard<std::function<void(void)>> TTF_Guard = multiLib::initTTF();
-    multiLib::initGuard<std::function<void(void)>> Mixer_Guard = multiLib::initMixer();
-    multiLib::initGuard<std::function<void(void)>> Audio_Guard = multiLib::openAudio();
+    Estd::initGuard<std::function<void(void)>> SDL_Guard = multiLib::initSDL();
+    Estd::initGuard<std::function<void(void)>> Image_Guard = multiLib::initImage();
+    Estd::initGuard<std::function<void(void)>> TTF_Guard = multiLib::initTTF();
+    Estd::initGuard<std::function<void(void)>> Mixer_Guard = multiLib::initMixer();
+    Estd::initGuard<std::function<void(void)>> Audio_Guard = multiLib::openAudio();
 
     multiLib::renderWindow mainWindow{"demo", 1280, 720};
     mainWindow.fullScreenWindow();
@@ -64,12 +64,12 @@ int main()
 
     mainEvent.addEventHandler(&mainKeyboard);
 
-    mainMouse.mouseButtonCallback( [&mouseDown](bool upOrDown, multiLib::mouseButtons button, int mouseX, int mouseY)
+    mainMouse.mouseButtonCallback( [&mouseDown](bool upOrDown, multiLib::mouseButtons, int, int)
     {
         mouseDown = upOrDown;
     });
 
-    mainMouse.mouseMoveCallback( [&mouseDown, &x, &y](int mouseX, int mouseY, int xrel, int yrel)
+    mainMouse.mouseMoveCallback( [&mouseDown, &x, &y](int mouseX, int mouseY, int, int)
     {
         if(mouseDown)
         {

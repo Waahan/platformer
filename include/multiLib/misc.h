@@ -7,31 +7,15 @@ extern "C"
     #include <SDL2/SDL.h>
 }
 
+#include "Estd.h"
+
 namespace multiLib
 {
-    template<typename T>
-    class initGuard
-    {
-        public:
-        initGuard(T destoryFunc) : destoryCallback{destoryFunc} {}
-
-        initGuard(const initGuard& copyFrom) = delete;
-        initGuard& operator=(const initGuard& copyFrom) = delete;
-
-        initGuard(initGuard&& moveFrom) = default;
-        initGuard& operator=(initGuard&& moveFrom) = default;
-
-        ~initGuard() { destoryCallback(); }
-
-        private:
-        T destoryCallback;
-    };
-
-    initGuard<std::function<void(void)>> initSDL();
-    initGuard<std::function<void(void)>> initImage();
-    initGuard<std::function<void(void)>> initTTF();
-    initGuard<std::function<void(void)>> initMixer();
-    initGuard<std::function<void(void)>> openAudio();
+    Estd::initGuard<std::function<void(void)>> initSDL();
+    Estd::initGuard<std::function<void(void)>> initImage();
+    Estd::initGuard<std::function<void(void)>> initTTF();
+    Estd::initGuard<std::function<void(void)>> initMixer();
+    Estd::initGuard<std::function<void(void)>> openAudio();
 
     class rectangle
     {
