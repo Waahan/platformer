@@ -5,9 +5,45 @@
 #include "networking.h"
 
 #include <thread>
+#include <chrono>
 
 int main()
 {
+#define IS_SERVER 0
+
+#if IS_SERVER == 1
+    std::cout << "SERVER" << std::endl;
+
+    networking::tcpServer server{"4444"};
+    server.bind();
+
+    std::unique_ptr<networking::baseClient> serverClient = server.acceptClient();
+
+    std::cout << "GOT CLIENT" << std::endl;
+
+    serverClient->send("HELLO SUSSY BAKA");
+
+    std::string buffer{};
+
+    serverClient->receive(buffer, 100);
+
+    std::cout << buffer << std::endl;
+#else
+    std::cout << "CLIENT" << std::endl;
+
+    networking::tcpClient client{};
+
+    client.connect("127.0.0.1", "4444");
+
+    std::string buffer{};
+
+    client.receive(buffer, 16);
+
+    client.send("HELLO TO YOU TO");
+
+    std::cout << buffer << std::endl;
+#endif
+
     Estd::initGuard<std::function<void(void)>> SDL_Guard = multiLib::initSDL();
     Estd::initGuard<std::function<void(void)>> Image_Guard = multiLib::initImage();
     Estd::initGuard<std::function<void(void)>> TTF_Guard = multiLib::initTTF();
@@ -31,7 +67,10 @@ int main()
 
     multiLib::image player{"assets/icon.png", multiLib::rectangle{0, 0, 600, 600}, mainWindow};
 
-    mainKeyboard.keyEventCallback( [&x, &y, speed] (multiLib::keyboardKeys key, bool upOrDown)
+    auto oldTime = std::chrono::steady_clock::now();
+    double deltaTime = 0.0;
+
+    mainKeyboard.keyEventCallback( [&x, &y, speed, &deltaTime] (multiLib::keyboardKeys key, bool upOrDown)
     { 
         if(upOrDown)
         {
@@ -41,19 +80,19 @@ int main()
                     exit(0);
 
                 case multiLib::keyboardKeys::w:
-                    y += speed;
+                    y += speed * deltaTime;
                     break;
 
                 case multiLib::keyboardKeys::s:
-                    y -= speed;
+                    y -= speed * deltaTime;
                     break;
 
                 case multiLib::keyboardKeys::a: 
-                    x -= speed; 
+                    x -= speed * deltaTime; 
                     break;
                     
                 case multiLib::keyboardKeys::d:
-                    x += speed;
+                    x += speed * deltaTime;
                     break;
 
                 default:
@@ -82,6 +121,11 @@ int main()
 
     while(true)
     {
+        auto currentTime = std::chrono::steady_clock::now();
+        deltaTime = -(double)std::chrono::duration_cast<std::chrono::milliseconds>(oldTime - currentTime).count() / 10;
+
+        oldTime = currentTime;
+
         mainWindow.clear();
 
         mainWindow.draw(player, x, y, 100, 100);
@@ -92,6 +136,4 @@ int main()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-
-    return 0;
 }

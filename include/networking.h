@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <tuple>
 #include <memory>
 #include <functional>
 
@@ -30,7 +29,8 @@ namespace networking
         //Winsock specific stuff
     #else 
         //Unix specific stuff
-        typedef int socketType;
+        using socketType = int;
+        using socketAddressLength = socklen_t;
 
         //Because winsock needs WSAStartup and WSACleanup
         inline void endNetworking() { /* No init no cleanup */ }
@@ -44,7 +44,9 @@ namespace networking
     class socketAddress
     {
         public:
-        socketAddress() = delete;
+        socketAddress(struct addrinfo* addressInfo); //Note ownership of addrinfo is not passed to socketAddress, must be filled in already
+        socketAddress(struct sockaddr&& createSocketAddress);
+        socketAddress() = default;
 
         socketAddress(const socketAddress& copyFrom) = default;
         socketAddress& operator=(const socketAddress& copyFrom) = default;
@@ -54,8 +56,14 @@ namespace networking
 
         ~socketAddress() = default;
 
+        inline const struct sockaddr* sockaddr() const { return &lowLevelSocketAddress; }
+        inline struct sockaddr* sockaddr() { return &lowLevelSocketAddress; }
+
+        inline int size() const { return lowLevelAddressLength; }
+
         private:
-        //socketAddress(addrinfo* addressInfo); //Note ownership of addrinfo is passed to socketAddress, must be filled in already
+        struct sockaddr lowLevelSocketAddress;
+        socketAddressLength lowLevelAddressLength;
     };
 
     enum connectionStatus
@@ -134,8 +142,85 @@ namespace networking
 
         ~server() override {}
 
+        virtual void bind() =0; //Must do this before other operations
+
         bool pendingData() const override =0;
 
         virtual std::unique_ptr<baseClient> acceptClient() const =0;
+    };
+
+    class tcpClient : public client
+    {
+        public:
+        tcpClient();
+
+        tcpClient(const tcpClient& copyFrom) = delete;
+        tcpClient& operator=(const tcpClient& copyFrom) = delete;
+
+        tcpClient(tcpClient&& moveFrom) = default;
+        tcpClient& operator=(tcpClient&& moveFrom) = default;
+
+        ~tcpClient() = default;
+
+        bool pendingData() const override;
+
+        connectionStatus connect(const std::string& hostname, const std::string& port) override;
+
+        connectionStatus send(const std::string& data) override;
+        connectionStatus receive(std::string& buffer, int max) override;
+
+        private:
+        Estd::fileDescriptorHandle<socketType, closeSocket> socketHandle;
+        socketAddress ownAddress;
+    };
+    
+    class tcpServerClient : public baseClient
+    {
+        friend class tcpServer;
+        public:
+        tcpServerClient() = delete;
+
+        tcpServerClient(const tcpServerClient& copyFrom) = delete;
+        tcpServerClient& operator=(const tcpServerClient& copyFrom) = delete;
+
+        tcpServerClient(tcpServerClient&& moveFrom) = default;
+        tcpServerClient& operator=(tcpServerClient&& moveFrom) = default;
+
+        ~tcpServerClient() = default;
+
+        bool pendingData() const override;
+
+        connectionStatus send(const std::string& data) override;
+        connectionStatus receive(std::string& buffer, int max) override;
+
+        private:
+        tcpServerClient(socketType setSocketHandle, socketAddress&& setAddress) : socketHandle{setSocketHandle}, ownAddress{setAddress} {}
+
+        Estd::fileDescriptorHandle<socketType, closeSocket> socketHandle;
+        socketAddress ownAddress; 
+    };
+
+    class tcpServer : public server
+    {
+        public:
+        tcpServer(const std::string& port);
+
+        tcpServer(const tcpServer& copyFrom) = delete;
+        tcpServer& operator=(const tcpServer& copyFrom) = delete;
+
+        tcpServer(tcpServer&& moveFrom) = default;
+        tcpServer& operator=(tcpServer&& moveFrom) = default;
+
+        ~tcpServer() override = default;
+
+        void bind() override;
+
+        bool pendingData() const override;
+
+        std::unique_ptr<baseClient> acceptClient() const override;
+
+        private:
+        Estd::fileDescriptorHandle<socketType, closeSocket> socketHandle;
+        socketAddress ownAddress;
     };
 } //networking

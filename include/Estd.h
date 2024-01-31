@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <random>
+#include <concepts>
 
 #include "errors.h"
 
@@ -21,11 +22,47 @@ namespace Estd
 
         ~customDelete() = default;
         
-        void operator()(T* pointer) const noexcept { return destroyFunction(pointer); } 
+        void operator()(T* resource) const noexcept { return destroyFunction(resource); } 
     };
 
     template<typename T, void (*destroyFunction)(T*)>
     using custom_unique_ptr = std::unique_ptr<T, customDelete<T, destroyFunction>>;
+
+    template<typename T, void (*cleanUpFunction)(T)>
+        requires std::copy_constructible<T>
+    struct fileDescriptorHandle
+    {
+        static_assert(std::is_trivially_copyable_v<T> == true);
+        public:
+        fileDescriptorHandle() : fileDescriptor{} {}
+        fileDescriptorHandle(T setFileDescriptor) : fileDescriptor{setFileDescriptor} {}
+
+        fileDescriptorHandle(const fileDescriptorHandle& copyFrom) = delete;
+        fileDescriptorHandle& operator=(const fileDescriptorHandle& copyFrom) = delete;
+
+        fileDescriptorHandle(fileDescriptorHandle&& moveFrom)
+        {
+            fileDescriptor = moveFrom.fileDescriptor;
+
+            moveFrom.fileDescriptor = 0;
+        }
+
+        fileDescriptorHandle& operator=(fileDescriptorHandle&& moveFrom)
+        {
+            fileDescriptor = moveFrom.fileDescriptor;
+
+            moveFrom.fileDescriptor = 0;
+
+            return *this;
+        }
+
+        ~fileDescriptorHandle() { if(fileDescriptor > 0) cleanUpFunction(fileDescriptor); }
+        
+        //Do not invoke cleanup function with this please
+        explicit operator T() const { return fileDescriptor; } 
+
+        T fileDescriptor;
+    };
 
     template<typename T>
     class initGuard
@@ -88,6 +125,4 @@ namespace Estd
         std::random_device ranDevice;
         std::mt19937 ranGenerator;
     };
-
-    std::string generateUUID(int length = 20);
 } //Estd

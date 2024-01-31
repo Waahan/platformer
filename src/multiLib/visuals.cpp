@@ -264,6 +264,7 @@ namespace multiLib
         Postcondition SDL_CreateRenderer does not return null
     */
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+        SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
         renderer.reset( SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED) );
 
