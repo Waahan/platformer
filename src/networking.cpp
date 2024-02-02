@@ -3,6 +3,8 @@
 #include <utility>
 
 #if defined(__WINDOWS__)
+    //Because winsock only has WSAPoll
+    inline int poll(struct pollfd* pollfdArrray, unsigned long elementsOfPollfdArray, int timeout) { return WSAPoll(pollfdArray, elementsOfPollfdArray, timeout); }
 #else
     extern "C"
     {
@@ -13,6 +15,44 @@
 namespace
 {
     #if defined(__WINDOWS__)
+        using transmissionType = char*;
+        using transmissionTypeConst = const char*; //Because of compiler bug below 
+        using transmissionLengthType = int; 
+        using transmissionReturnType = int;
+
+        std::string getSocketError()
+        {
+        /*
+            Return a error message string for winsock errors
+        */
+            int errorCode = WSAGetLastError();
+
+            char* messageBuffer;
+            runtime_assert((FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), messageBuffer, 0, nullptr) != 0), "Failed to make error string, good luck.");
+
+            std::string errorMessage{static_cast<const char*>(messageBuffer)};
+
+            LocalFree(messageBuffer);
+
+            return errorMessage;
+        }
+
+        Estd::initGuard<std::function<void(void)>> startNetworking(const std::string& windowsVersion)
+        {
+        /*
+            Init winsock and use desired windowsVersion
+            
+            Precondition between 1.0 and 2.2 or latest version
+            Precondition 3 characters
+        */
+            debug_assert(( (windowsVersion.size() / sizeof(std::string::value_type)) == 3 ), "windowsVersion string must be 3 characters long. Ex 2.2");
+
+            WSADATA wsaData{};
+
+            runtime_assert((WSAStartup(MAKEWORD(windowsVersion[0], windowsVersion[2]), &wsaData) == 0), "WSAStartup failed. Error: " + getSocketError());
+
+            return Estd::initGuard<std::function<void(void)>>{endNetworking};
+        }
     #else
         using transmissionType = void*;
         using transmissionTypeConst = const void*; //Because of a compile error with reinterpret_cast

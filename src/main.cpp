@@ -9,41 +9,6 @@
 
 int main()
 {
-#define IS_SERVER 0
-
-#if IS_SERVER == 1
-    std::cout << "SERVER" << std::endl;
-
-    networking::tcpServer server{"4444"};
-    server.bind();
-
-    std::unique_ptr<networking::baseClient> serverClient = server.acceptClient();
-
-    std::cout << "GOT CLIENT" << std::endl;
-
-    serverClient->send("HELLO SUSSY BAKA");
-
-    std::string buffer{};
-
-    serverClient->receive(buffer, 100);
-
-    std::cout << buffer << std::endl;
-#else
-    std::cout << "CLIENT" << std::endl;
-
-    networking::tcpClient client{};
-
-    client.connect("127.0.0.1", "4444");
-
-    std::string buffer{};
-
-    client.receive(buffer, 16);
-
-    client.send("HELLO TO YOU TO");
-
-    std::cout << buffer << std::endl;
-#endif
-
     Estd::initGuard<std::function<void(void)>> SDL_Guard = multiLib::initSDL();
     Estd::initGuard<std::function<void(void)>> Image_Guard = multiLib::initImage();
     Estd::initGuard<std::function<void(void)>> TTF_Guard = multiLib::initTTF();
