@@ -28,7 +28,9 @@ namespace
             int errorCode = WSAGetLastError();
 
             char* messageBuffer;
-            runtime_assert((FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), messageBuffer, 0, nullptr) != 0), "Failed to make error string, good luck.");
+
+            [[maybe_unused]] const unsigned long formatMessageResult = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+            runtime_assert((formatMessageResult != 0), "Failed to make error string, good luck.");
 
             std::string errorMessage{static_cast<const char*>(messageBuffer)};
 
@@ -49,7 +51,9 @@ namespace
 
             WSADATA wsaData{};
 
-            runtime_assert((WSAStartup(MAKEWORD(windowsVersion[0], windowsVersion[2]), &wsaData) == 0), "WSAStartup failed. Error: " + getSocketError());
+            [[maybe_unused]] const int startupResult = WSAStartup(MAKEWORD(windowsVersion[0], windowsVersion[2]), &wsaData);
+
+            runtime_assert((startupResult == 0), "WSAStartup failed. Error: " + getSocketError());
 
             return Estd::initGuard<std::function<void(void)>>{endNetworking};
         }
@@ -79,7 +83,9 @@ namespace
         struct addrinfo* resultOfGetAddressInfo;
 
         //Use nullptr to use the local host
-        runtime_assert((getaddrinfo(nullptr, port.c_str(), &getAddressInfoHints, &resultOfGetAddressInfo) == 0), "getaddrinfo failed. Error: " + networking::getSocketError());
+        [[maybe_unused]] const int getaddrinfoResult = getaddrinfo(nullptr, port.c_str(), &getAddressInfoHints, &resultOfGetAddressInfo);
+
+        runtime_assert((getaddrinfoResult == 0), "getaddrinfo failed. Error: " + networking::getSocketError());
 
         return Estd::custom_unique_ptr<addrinfo, freeaddrinfo>{resultOfGetAddressInfo};
     }
@@ -111,10 +117,14 @@ namespace
         {
             int yes = 1;
 
-            debug_assert((setsockopt(bindingSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == 0), "Failed to set socket option. Error: " + networking::getSocketError());
+            [[maybe_unused]] const int sockoptResult = setsockopt(bindingSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
+            runtime_assert((sockoptResult == 0), "Failed to set socket option. Error: " + networking::getSocketError());
         }
 
-        runtime_assert((bind(bindingSocket, bindingGuide.sockaddr(), bindingGuide.size()) == 0), "Failed to bind socket. Error: " + networking::getSocketError());
+        [[maybe_unused]] const int bindResult = bind(bindingSocket, bindingGuide.sockaddr(), bindingGuide.size());
+
+        runtime_assert((bindResult == 0), "Failed to bind socket. Error: " + networking::getSocketError());
     }
 
     networking::socketAddress resolveHost(const std::string& hostname, const std::string& port, protocal agreedProtocal)
@@ -132,7 +142,9 @@ namespace
 
         struct addrinfo* resultAddress;
 
-        debug_assert((getaddrinfo(hostname.c_str(), port.c_str(), &hints, &resultAddress) == 0), "getaddrinfo failed. Error: " + networking::getSocketError());
+        [[maybe_unused]] const int getaddrinfoResult = getaddrinfo(hostname.c_str(), port.c_str(), &hints, &resultAddress);
+
+        runtime_assert((getaddrinfoResult == 0), "getaddrinfo failed. Error: " + networking::getSocketError());
 
         Estd::custom_unique_ptr<struct addrinfo, freeaddrinfo> addressInfo{resultAddress};
 
@@ -148,7 +160,9 @@ namespace
         polling.fd = socketHandle; //Set socket to poll
         polling.events = POLLRDNORM; //Can data be read without blocking
 
-        debug_assert((poll(&polling, 1, 30000) > 0), "Poll failed. Error: " + networking::getSocketError());
+        [[maybe_unused]] const int pollResult = poll(&polling, 1, 30000);
+
+        runtime_assert((pollResult > 0), "Poll failed. Error: " + networking::getSocketError());
 
         return (polling.revents == POLLRDNORM);
     }
@@ -297,7 +311,9 @@ namespace networking
     */
         bindSocket(static_cast<socketType>(socketHandle), ownAddress);
 
-        runtime_assert((listen(static_cast<socketType>(socketHandle), 100) == 0), "Failed to make socket listen. Error: " + getSocketError());
+        [[maybe_unused]] const int listenResult = listen(static_cast<socketType>(socketHandle), 100);
+
+        runtime_assert((listnenResult == 0), "Failed to make socket listen. Error: " + getSocketError());
     }
 
     bool tcpServer::pendingData() const

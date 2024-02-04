@@ -7,9 +7,6 @@
     I replaced assert with debug assert because its more clear and explicit.
 */
 
-//Temp fix
-#define BUILD_RUNTIME_ERRORS 1 
-
 #if BUILD_RUNTIME_ERRORS == 1
 
     #include <iostream>

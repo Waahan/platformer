@@ -20,7 +20,7 @@ namespace multiLib
         createRenderer();
 
         {
-            bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
+            [[maybe_unused]] const bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
 
             runtime_assert(!hasError, SDL_GetError());
         }
@@ -51,7 +51,7 @@ namespace multiLib
     */
         float opacity = 0.0f;
 
-        bool hasError = SDL_GetWindowOpacity(window.get(), &opacity);
+        [[maybe_unused]] const bool hasError = SDL_GetWindowOpacity(window.get(), &opacity);
 
         runtime_assert(!hasError, SDL_GetError());
 
@@ -81,7 +81,7 @@ namespace multiLib
 
         Postcondition SDL_SetWindowFullScreen returns 0
     */
-        bool hasError = SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP);
+        [[maybe_unused]] const bool hasError = SDL_SetWindowFullscreen(window.get(), SDL_WINDOW_FULLSCREEN_DESKTOP);
 
         runtime_assert(!hasError, SDL_GetError());
     }
@@ -99,7 +99,7 @@ namespace multiLib
 
         SDL_SetWindowSize(window.get(), width, height);
 
-        bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
+        [[maybe_unused]] const bool hasError = SDL_RenderSetLogicalSize(renderer.get(), width, height);
 
         runtime_assert(!hasError, SDL_GetError());
 
@@ -149,7 +149,7 @@ namespace multiLib
     */
         debug_assert((opacity >= 0.0f && opacity <= 1.0f), "opacity must be between 0.0f and 1.0f");
 
-        bool hasError = SDL_SetWindowOpacity(window.get(), opacity);
+        [[maybe_unused]] const bool hasError = SDL_SetWindowOpacity(window.get(), opacity);
 
         runtime_assert(!hasError, SDL_GetError());
 
@@ -198,7 +198,7 @@ namespace multiLib
 
         Postcondition SDL_RenderClear returns 0
     */
-        bool hasError = SDL_RenderClear(renderer.get());
+        [[maybe_unused]] const bool hasError = SDL_RenderClear(renderer.get());
 
         runtime_assert(!hasError, SDL_GetError());
     }
@@ -224,7 +224,7 @@ namespace multiLib
 
         SDL_Rect src {drawable.srcImage().toRect()};
 
-        bool hasError = SDL_RenderCopy(renderer.get(), drawable.src(), &src, &dest);
+        [[maybe_unused]] const bool hasError = SDL_RenderCopy(renderer.get(), drawable.src(), &src, &dest);
 
         runtime_assert(!hasError, SDL_GetError());
 

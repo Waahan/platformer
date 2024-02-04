@@ -19,7 +19,7 @@ namespace multiLib
         
         Postcondition SDL_Init returns 0
     */
-        bool sdlInitResult = SDL_Init(SDL_INIT_EVERYTHING);
+        [[maybe_unused]] const bool sdlInitResult = SDL_Init(SDL_INIT_EVERYTHING);
 
         runtime_assert(!sdlInitResult, SDL_GetError());
 
@@ -35,7 +35,7 @@ namespace multiLib
     */
         int imageInitFlags = IMG_INIT_PNG;
 
-        int imageInitResult = IMG_Init(imageInitFlags);
+        [[maybe_unused]] const int imageInitResult = IMG_Init(imageInitFlags);
 
         runtime_assert((imageInitResult == imageInitFlags), SDL_GetError());
 
@@ -49,7 +49,8 @@ namespace multiLib
 
         Postcondition TTF_Init returns 0
     */
-        bool ttfInitResult = TTF_Init();
+        [[maybe_unused]] const bool ttfInitResult = TTF_Init();
+
         runtime_assert(!ttfInitResult, TTF_GetError());
 
         return Estd::initGuard<std::function<void(void)>>{TTF_Quit};
@@ -62,9 +63,9 @@ namespace multiLib
 
         Postcondition Mix_Init returns mixFlags
     */
-        int mixFlags = MIX_INIT_MP3;
+        const int mixFlags = MIX_INIT_MP3;
 
-        int mixResult = Mix_Init(mixFlags);
+        [[maybe_unused]] const int mixResult = Mix_Init(mixFlags);
 
         runtime_assert((mixResult == mixFlags), Mix_GetError());
         
@@ -78,12 +79,12 @@ namespace multiLib
 
         Postcondition Mix_OpenAudio returns 0
     */
-        int frequency = 44100;
-        unsigned short format = MIX_DEFAULT_FORMAT;
-        int channels = 2;
-        int chunksize = 2048;
+        const int frequency = 44100;
+        const unsigned short format = MIX_DEFAULT_FORMAT;
+        const int channels = 2;
+        const int chunksize = 2048;
 
-        bool initResult = Mix_OpenAudio(frequency, format, channels, chunksize);
+        [[maybe_unused]] const bool initResult = Mix_OpenAudio(frequency, format, channels, chunksize);
 
         runtime_assert(!initResult, Mix_GetError());
 

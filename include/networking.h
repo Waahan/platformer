@@ -42,10 +42,21 @@ namespace networking
 
         std::string getSocketError(); //Exposes socket errors for client and server send and recv errors
 
-        inline void endNetworking() { debug_assert((WSACleanup() == 0), "WSACleanup failed. Error: " + getSocketError()); }
+        inline void endNetworking() 
+        { 
+            [[maybe_unused]] const int cleanupResult = WSACleanup();
+
+            debug_assert((cleanupResult == 0), "WSACleanup failed. Error: " + getSocketError()); 
+        }
+
         Estd::initGuard<std::function<void(void)>> startNetworking(const std::string& windowsVersion);
 
-        inline void closeSocket(socketType destroySocket) { debug_assert((closesocket(destroySocket) == 0), "closesocket failed. Error: " + getSocketError()); }
+        inline void closeSocket(socketType destroySocket) 
+        { 
+            [[maybe_unused]] const int closeSocketResult = closesocket(destroySocket);
+
+            debug_assert((closeSocketResult == 0), "closesocket failed. Error: " + getSocketError()); 
+        }
     #else 
         //Unix specific stuff
         using socketType = int;
@@ -57,7 +68,12 @@ namespace networking
         inline void endNetworking() { /* No init no cleanup */ }
         inline Estd::initGuard<std::function<void(void)>> startNetworking(const std::string&) { return Estd::initGuard<std::function<void(void)>>(endNetworking); /* No init function for unix socket api */ }
 
-        inline void closeSocket(socketType destroySocket) { debug_assert((close(destroySocket) == 0), "Failed to close socket. Error: " + getSocketError()); } //Because of the return type of close and custom_unique_ptrs templates
+        inline void closeSocket(socketType destroySocket) 
+        { 
+            [[maybe_unused]] const int closeResult = close(destroySocket);
+
+            debug_assert((closeResult == 0), "Failed to close socket. Error: " + getSocketError()); 
+        } //Because of the return type of close and custom_unique_ptrs templates
     #endif
 
     class socketAddress

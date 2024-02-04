@@ -65,7 +65,7 @@ namespace multiLib
 
         Postcondition Mix_FadeInMusic returns 0 
     */
-        bool hasError = Mix_FadeInMusic(currentMusic.get(), loops, (int)fadeInFor.count()); 
+        [[maybe_unused]] const bool hasError = Mix_FadeInMusic(currentMusic.get(), loops, (int)fadeInFor.count()); 
 
         runtime_assert(!hasError, Mix_GetError());
 
@@ -84,7 +84,7 @@ namespace multiLib
         if(fading())
             stop();
 
-        bool hasError = Mix_PlayMusic(currentMusic.get(), loops);
+        [[maybe_unused]] const bool hasError = Mix_PlayMusic(currentMusic.get(), loops);
 
         runtime_assert(!hasError, Mix_GetError());
 
